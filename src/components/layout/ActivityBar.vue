@@ -128,11 +128,6 @@ function openAbout() {
   flex-direction: column;
 }
 
-.activity-bottom {
-  justify-content: flex-end;
-  padding-bottom: 8px;
-}
-
 .activity-item {
   display: flex;
   align-items: center;
