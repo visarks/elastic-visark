@@ -189,15 +189,6 @@ export class ElasticClient {
         const endTime = Date.now()
         const curl = this.generateCurl(method, url, headers, body)
         try {
-          console.log('Saving history:', {
-            connection_id: this.connectionId,
-            connection_name: this.connectionName,
-            start_time: startTime,
-            end_time: endTime,
-            curl,
-            status,
-            duration: endTime - startTime
-          })
           await saveHistoryItem({
             connection_id: this.connectionId,
             connection_name: this.connectionName,
@@ -207,15 +198,9 @@ export class ElasticClient {
             status,
             duration: endTime - startTime
           })
-          console.log('History saved successfully')
-        } catch (err) {
-          console.error('Failed to save history:', err)
+        } catch {
+          // 忽略保存历史记录的错误
         }
-      } else {
-        console.warn('Skipping history save: no connection info', {
-          connectionId: this.connectionId,
-          connectionName: this.connectionName
-        })
       }
     }
   }

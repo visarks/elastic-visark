@@ -87,4 +87,4 @@ CREATE INDEX IF NOT EXISTS idx_tree_parent ON tree_data(parent_id);
 -- Insert default settings
 INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'dark');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('history_retention_days', '7');
-INSERT OR IGNORE INTO settings (key, value) VALUES ('excludeIndexPatterns', '[.]*');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('exclude_index_patterns', '["[.]*"]');

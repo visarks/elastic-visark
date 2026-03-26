@@ -4,11 +4,13 @@ import { NCard, NButton, NIcon, NInput, NSelect, NPagination, NEmpty, NTooltip }
 import { Refresh, ExpandOutline } from '@vicons/ionicons5'
 import { useConnectionStore } from '@/store/modules/connection'
 import { useCacheStore } from '@/store/modules/cache'
+import { useSettingsStore } from '@/store/modules/settings'
 import { ElasticClient } from '@/api/elastic'
 import ShardsModal from '@/components/ShardsModal.vue'
 
 const connectionStore = useConnectionStore()
 const cacheStore = useCacheStore()
+const settingsStore = useSettingsStore()
 
 interface ShardInfo {
   index: string
@@ -111,7 +113,12 @@ const groupedShards = computed<IndexShards[]>(() => {
   const groups = new Map<string, IndexShards>()
 
   shardsData.value.forEach(shard => {
-    // 过滤
+    // 排除索引过滤
+    if (settingsStore.isIndexExcluded(shard.index)) {
+      return
+    }
+
+    // 搜索过滤
     if (searchText.value && !shard.index.toLowerCase().includes(searchText.value.toLowerCase())) {
       return
     }

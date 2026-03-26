@@ -12,7 +12,7 @@ function matchWildcard(pattern: string, text: string): boolean {
 }
 
 // 默认排除索引模式 - 以点开头的系统索引
-const DEFAULT_EXCLUDE_PATTERNS = ['.']
+const DEFAULT_EXCLUDE_PATTERNS = ['[.]*']
 
 export const useSettingsStore = defineStore('settings', () => {
   const theme = ref<ThemeType>('dark')
