@@ -11,26 +11,19 @@
         <img :src="LogoIcon" alt="elastic-visark" class="logo-image" />
       </div>
       <h2 class="app-name">{{ t('about.name') }}</h2>
-      <p class="app-description">{{ t('about.description') }}</p>
 
-      <div class="info-section">
-        <a
-          class="github-link"
-          href="https://github.com/visarks/elastic-visark"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-          </svg>
-          github.com/visarks/elastic-visark
-        </a>
+      <div class="version-text">{{ t('about.version') }} {{ version }}</div>
 
-        <div class="version-info">
-          <span class="version-label">{{ t('about.version') }}:</span>
-          <span class="version-value">{{ version }}</span>
-        </div>
-      </div>
+      <a
+        class="github-link"
+        href="https://github.com/visarks/elastic-visark"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        源码地址
+      </a>
+
+      <p class="copyright">© podigua 2025</p>
     </div>
   </n-modal>
 </template>
@@ -70,7 +63,7 @@ defineExpose({
 <style scoped lang="scss">
 .about-content {
   text-align: center;
-  padding: 24px 16px;
+  padding: 32px 16px;
 }
 
 .about-logo {
@@ -85,60 +78,36 @@ defineExpose({
 .app-name {
   font-size: 20px;
   font-weight: 600;
-  margin: 0 0 8px 0;
+  margin: 0 0 20px 0;
   background: linear-gradient(135deg, #63e2b7 0%, #4caf50 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.app-description {
-  color: #888;
+.version-text {
   font-size: 14px;
-  margin: 0 0 20px 0;
-}
-
-.info-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  color: #888;
   margin-bottom: 16px;
 }
 
 .github-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: block;
   color: #70c0e8;
   font-size: 13px;
   text-decoration: none;
+  margin-bottom: 20px;
   transition: color 0.2s;
 
   &:hover {
     color: #63e2b7;
   }
-
-  svg {
-    flex-shrink: 0;
-  }
 }
 
-.version-info {
-  font-size: 14px;
+.copyright {
+  font-size: 12px;
   color: #666;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 8px 16px;
-  border-radius: 8px;
-}
-
-.version-label {
-  margin-right: 8px;
-}
-
-.version-value {
-  font-weight: 600;
-  color: #63e2b7;
+  margin: 0;
 }
 
 // Light theme
@@ -150,10 +119,6 @@ defineExpose({
     background-clip: text;
   }
 
-  .app-description {
-    color: #666;
-  }
-
   .github-link {
     color: #2080f0;
 
@@ -162,12 +127,8 @@ defineExpose({
     }
   }
 
-  .version-info {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  .version-value {
-    color: #18a058;
+  .copyright {
+    color: #999;
   }
 }
 </style>
