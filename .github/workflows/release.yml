@@ -211,6 +211,82 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
+      - name: Create update JSON files
+        run: |
+          VERSION=${{ github.ref_name }}
+          VERSION_NUM="${VERSION#v}"
+
+          # Get current date in ISO format
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Create update JSON for macOS aarch64
+          cat > darwin-aarch64-update.json << EOF
+          {
+            "version": "${VERSION_NUM}",
+            "date": "${DATE}",
+            "platforms": {
+              "darwin-aarch64": {
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-aarch64-${VERSION}.dmg"
+              }
+            }
+          }
+          EOF
+
+          # Create update JSON for macOS x64
+          cat > darwin-x86_64-update.json << EOF
+          {
+            "version": "${VERSION_NUM}",
+            "date": "${DATE}",
+            "platforms": {
+              "darwin-x86_64": {
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-x64-${VERSION}.dmg"
+              }
+            }
+          }
+          EOF
+
+          # Create update JSON for Windows x64
+          cat > win32-x86_64-update.json << EOF
+          {
+            "version": "${VERSION_NUM}",
+            "date": "${DATE}",
+            "platforms": {
+              "win32-x86_64": {
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-x64-${VERSION}-setup.exe"
+              }
+            }
+          }
+          EOF
+
+          # Create update JSON for Windows aarch64
+          cat > win32-aarch64-update.json << EOF
+          {
+            "version": "${VERSION_NUM}",
+            "date": "${DATE}",
+            "platforms": {
+              "win32-aarch64": {
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-aarch64-${VERSION}-setup.exe"
+              }
+            }
+          }
+          EOF
+
+          # Create update JSON for Linux x64
+          cat > linux-x86_64-update.json << EOF
+          {
+            "version": "${VERSION_NUM}",
+            "date": "${DATE}",
+            "platforms": {
+              "linux-x86_64": {
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-linux-x64-${VERSION}.AppImage"
+              }
+            }
+          }
+          EOF
+
+          echo "Created update JSON files:"
+          ls -la *-update.json
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -222,6 +298,7 @@ jobs:
             artifacts/**/*.deb
             artifacts/**/*.rpm
             artifacts/**/*.AppImage
+            *-update.json
           draft: true
           generate_release_notes: true
         env:
