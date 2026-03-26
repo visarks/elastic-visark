@@ -67,7 +67,7 @@ defineExpose({
 }
 
 .about-logo {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .logo-image {
@@ -78,7 +78,7 @@ defineExpose({
 .app-name {
   font-size: 20px;
   font-weight: 600;
-  margin: 0 0 10px 0;
+  margin: 0 0 5px 0;
   background: linear-gradient(135deg, #63e2b7 0%, #4caf50 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -88,7 +88,7 @@ defineExpose({
 .version-text {
   font-size: 14px;
   color: #888;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .github-link {
@@ -96,7 +96,7 @@ defineExpose({
   color: #70c0e8;
   font-size: 13px;
   text-decoration: none;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   transition: color 0.2s;
 
   &:hover {
