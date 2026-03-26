@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useConnectionStore } from '@/store/modules/connection'
 import LogoIcon from '@/assets/logo.svg'
-import AboutDialog from '@/components/AboutDialog.vue'
 
-const { t } = useI18n()
 const connectionStore = useConnectionStore()
 
 const appWindow = getCurrentWindow()
@@ -90,36 +87,16 @@ async function startDragging(e: MouseEvent) {
     console.error('startDragging error:', err)
   }
 }
-
-// About dialog
-const showAbout = ref(false)
-
-// Logo dropdown menu options
-const logoMenuOptions = computed(() => [
-  {
-    label: t('about.title'),
-    key: 'about'
-  }
-])
-
-// Handle logo menu selection
-function handleLogoMenuSelect(key: string) {
-  if (key === 'about') {
-    showAbout.value = true
-  }
-}
 </script>
 
 <template>
   <div class="titlebar" @mousedown="startDragging">
     <!-- 左侧：Logo 和集群标签 -->
     <div class="titlebar-left">
-      <n-dropdown trigger="click" :options="logoMenuOptions" @select="handleLogoMenuSelect">
-        <div class="app-logo" @mousedown.stop>
-          <img :src="LogoIcon" alt="elastic-visark" class="logo-icon" />
-          <span class="logo-text">elastic-visark</span>
-        </div>
-      </n-dropdown>
+      <div class="app-logo" @mousedown.stop>
+        <img :src="LogoIcon" alt="elastic-search" class="logo-icon" />
+        <span class="logo-text">elastic-search</span>
+      </div>
 
       <!-- 已连接的集群标签 -->
       <div class="cluster-tags">
@@ -165,11 +142,6 @@ function handleLogoMenuSelect(key: string) {
         </button>
       </div>
     </div>
-
-    <!-- About Dialog - rendered via Teleport -->
-    <teleport to="body">
-      <about-dialog v-model:show="showAbout" />
-    </teleport>
   </div>
 </template>
 

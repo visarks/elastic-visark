@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NTooltip, NIcon } from 'naive-ui'
-import { SettingsOutline, MoonOutline, SunnyOutline, TimeOutline, ServerOutline } from '@vicons/ionicons5'
+import { SettingsOutline, MoonOutline, SunnyOutline, TimeOutline, ServerOutline, InformationCircleOutline } from '@vicons/ionicons5'
 import { useSettingsStore } from '@/store/modules/settings'
 import { useConnectionStore } from '@/store/modules/connection'
 import SettingsModal from '@/components/SettingsModal.vue'
 import HistoryModal from '@/components/HistoryModal.vue'
+import AboutDialog from '@/components/AboutDialog.vue'
 
 const settingsStore = useSettingsStore()
 const connectionStore = useConnectionStore()
 
 const settingsModalRef = ref<InstanceType<typeof SettingsModal> | null>(null)
 const historyModalRef = ref<InstanceType<typeof HistoryModal> | null>(null)
+const showAbout = ref(false)
 
 // 切换主题
 function toggleTheme() {
@@ -73,6 +75,16 @@ function toggleSideTree() {
         {{ settingsStore.theme === 'dark' ? '深色主题' : '浅色主题' }}
       </n-tooltip>
 
+      <!-- 关于 -->
+      <n-tooltip placement="right" trigger="hover">
+        <template #trigger>
+          <div class="activity-item" @click="showAbout = true">
+            <n-icon :component="InformationCircleOutline" size="20" />
+          </div>
+        </template>
+        关于
+      </n-tooltip>
+
       <!-- 设置图标 -->
       <n-tooltip placement="right" trigger="hover">
         <template #trigger>
@@ -86,6 +98,9 @@ function toggleSideTree() {
 
     <SettingsModal ref="settingsModalRef" />
     <HistoryModal ref="historyModalRef" />
+    <teleport to="body">
+      <AboutDialog v-model:show="showAbout" />
+    </teleport>
   </div>
 </template>
 
