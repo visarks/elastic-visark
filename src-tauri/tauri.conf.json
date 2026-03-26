@@ -40,7 +40,8 @@
       "icons/256x256.png",
       "icons/512x512.png",
       "icons/icon.png",
-      "icons/icon.icns"
+      "icons/icon.icns",
+      "icons/icon.ico"
     ],
     "macOS": {
       "entitlements": "entitlements.plist"
@@ -52,7 +53,7 @@
     },
     "updater": {
       "endpoints": [
-        "https://github.com/podigua/elastic-visark/releases/latest/download/{{target}}-{{arch}}-update.json"
+        "https://github.com/visarks/elastic-visark/releases/latest/download/{{target}}-{{arch}}-update.json"
       ],
       "pubkey": ""
     }
