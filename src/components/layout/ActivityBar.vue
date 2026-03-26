@@ -13,7 +13,7 @@ const connectionStore = useConnectionStore()
 
 const settingsModalRef = ref<InstanceType<typeof SettingsModal> | null>(null)
 const historyModalRef = ref<InstanceType<typeof HistoryModal> | null>(null)
-const showAbout = ref(false)
+const aboutDialogRef = ref<InstanceType<typeof AboutDialog> | null>(null)
 
 // 切换主题
 function toggleTheme() {
@@ -33,6 +33,11 @@ function openHistory() {
 // 切换左侧集群管理树
 function toggleSideTree() {
   connectionStore.toggleSideTree()
+}
+
+// 打开关于对话框
+function openAbout() {
+  aboutDialogRef.value?.open()
 }
 </script>
 
@@ -78,7 +83,7 @@ function toggleSideTree() {
       <!-- 关于 -->
       <n-tooltip placement="right" trigger="hover">
         <template #trigger>
-          <div class="activity-item" @click="showAbout = true">
+          <div class="activity-item" @click="openAbout">
             <n-icon :component="InformationCircleOutline" size="20" />
           </div>
         </template>
@@ -98,7 +103,7 @@ function toggleSideTree() {
 
     <SettingsModal ref="settingsModalRef" />
     <HistoryModal ref="historyModalRef" />
-    <AboutDialog v-model:show="showAbout" />
+    <AboutDialog ref="aboutDialogRef" />
   </div>
 </template>
 
@@ -121,6 +126,11 @@ function toggleSideTree() {
 .activity-bottom {
   display: flex;
   flex-direction: column;
+}
+
+.activity-bottom {
+  justify-content: flex-end;
+  padding-bottom: 8px;
 }
 
 .activity-item {

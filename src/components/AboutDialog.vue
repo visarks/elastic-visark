@@ -40,7 +40,7 @@ import { checkForUpdate } from '@/services/updater'
 
 const { t } = useI18n()
 
-const showModal = defineModel<boolean>('show', { default: false })
+const showModal = ref(false)
 const version = ref<string>('')
 const checking = ref(false)
 const updateMessage = ref('')
@@ -55,9 +55,10 @@ async function loadVersion() {
   }
 }
 
-// Initialize version when modal opens
-async function handleOpen() {
-  await loadVersion()
+// Open modal
+function open() {
+  showModal.value = true
+  loadVersion()
   updateMessage.value = ''
 }
 
@@ -87,12 +88,8 @@ async function handleCheckUpdate() {
   }
 }
 
-// Watch for modal open
-import { watch } from 'vue'
-watch(showModal, (val) => {
-  if (val) {
-    handleOpen()
-  }
+defineExpose({
+  open
 })
 </script>
 
