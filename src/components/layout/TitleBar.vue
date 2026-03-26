@@ -94,8 +94,8 @@ async function startDragging(e: MouseEvent) {
     <!-- 左侧：Logo 和集群标签 -->
     <div class="titlebar-left">
       <div class="app-logo" @mousedown.stop>
-        <img :src="LogoIcon" alt="elastic-search" class="logo-icon" />
-        <span class="logo-text">elastic-search</span>
+        <img :src="LogoIcon" alt="elastic-visark" class="logo-icon" />
+        <span class="logo-text">elastic-visark</span>
       </div>
 
       <!-- 已连接的集群标签 -->

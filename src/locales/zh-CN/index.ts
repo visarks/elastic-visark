@@ -35,7 +35,7 @@ export default {
   },
   about: {
     title: '关于',
-    name: 'elastic-search',
+    name: 'Elastic VisArk',
     description: 'Elasticsearch 可视化管理工具',
     version: '版本',
     checkUpdate: '检查更新',

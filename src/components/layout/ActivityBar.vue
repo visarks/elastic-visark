@@ -98,9 +98,7 @@ function toggleSideTree() {
 
     <SettingsModal ref="settingsModalRef" />
     <HistoryModal ref="historyModalRef" />
-    <teleport to="body">
-      <AboutDialog v-model:show="showAbout" />
-    </teleport>
+    <AboutDialog v-model:show="showAbout" />
   </div>
 </template>
 

@@ -2,7 +2,7 @@
   <n-modal v-model:show="showModal" preset="card" :title="t('about.title')" style="width: 400px" :mask-closable="true">
     <div class="about-content">
       <div class="about-logo">
-        <img :src="LogoIcon" alt="elastic-search" class="logo-image" />
+        <img :src="LogoIcon" alt="elastic-visark" class="logo-image" />
       </div>
       <h2 class="app-name">{{ t('about.name') }}</h2>
       <p class="app-description">{{ t('about.description') }}</p>

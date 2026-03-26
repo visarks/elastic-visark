@@ -55,14 +55,14 @@ jobs:
           # DMG
           cd src-tauri/target/${{ matrix.target }}/release/bundle/dmg
           for f in *.dmg; do
-            mv "$f" "elastic-search-macos-${{ matrix.arch }}-${VERSION}.dmg"
+            mv "$f" "elastic-visark-macos-${{ matrix.arch }}-${VERSION}.dmg"
           done
           # macOS app bundle for pkg
           cd ../macos
           if [ -d "*.app" ]; then
             APP_NAME=$(ls -d *.app | head -1)
             # Create pkg
-            pkgbuild --root . --identifier com.elastic.search --version "${VERSION#v}" --install-location /Applications "elastic-search-macos-${{ matrix.arch }}-${VERSION}.pkg"
+            pkgbuild --root . --identifier com.elastic.visark --version "${VERSION#v}" --install-location /Applications "elastic-visark-macos-${{ matrix.arch }}-${VERSION}.pkg"
           fi
 
       - name: Upload artifacts
@@ -120,12 +120,12 @@ jobs:
           # NSIS (exe)
           cd src-tauri/target/${{ matrix.target }}/release/bundle/nsis
           for f in *.exe; do
-            mv "$f" "elastic-search-windows-${{ matrix.arch }}-${VERSION}-setup.exe"
+            mv "$f" "elastic-visark-windows-${{ matrix.arch }}-${VERSION}-setup.exe"
           done
           # MSI
           cd ../msi
           for f in *.msi; do
-            mv "$f" "elastic-search-windows-${{ matrix.arch }}-${VERSION}.msi"
+            mv "$f" "elastic-visark-windows-${{ matrix.arch }}-${VERSION}.msi"
           done
 
       - name: Upload artifacts
@@ -177,17 +177,17 @@ jobs:
           # DEB
           cd src-tauri/target/release/bundle/deb
           for f in *.deb; do
-            mv "$f" "elastic-search-linux-x64-${VERSION}.deb"
+            mv "$f" "elastic-visark-linux-x64-${VERSION}.deb"
           done
           # RPM
           cd ../rpm
           for f in *.rpm; do
-            mv "$f" "elastic-search-linux-x64-${VERSION}.rpm"
+            mv "$f" "elastic-visark-linux-x64-${VERSION}.rpm"
           done
           # AppImage
           cd ../appimage
           for f in *.AppImage; do
-            mv "$f" "elastic-search-linux-x64-${VERSION}.AppImage"
+            mv "$f" "elastic-visark-linux-x64-${VERSION}.AppImage"
           done
 
       - name: Upload artifacts
@@ -226,7 +226,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "darwin-aarch64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-search-macos-aarch64-${VERSION}.dmg"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-aarch64-${VERSION}.dmg"
               }
             }
           }
@@ -239,7 +239,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "darwin-x86_64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-search-macos-x64-${VERSION}.dmg"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-x64-${VERSION}.dmg"
               }
             }
           }
@@ -252,7 +252,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "win32-x86_64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-search-windows-x64-${VERSION}-setup.exe"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-x64-${VERSION}-setup.exe"
               }
             }
           }
@@ -265,7 +265,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "win32-aarch64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-search-windows-aarch64-${VERSION}-setup.exe"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-aarch64-${VERSION}-setup.exe"
               }
             }
           }
@@ -278,7 +278,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "linux-x86_64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-search-linux-x64-${VERSION}.AppImage"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-linux-x64-${VERSION}.AppImage"
               }
             }
           }

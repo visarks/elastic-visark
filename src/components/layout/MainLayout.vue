@@ -103,8 +103,8 @@ watch(
             <!-- 未连接时显示欢迎页 -->
             <div v-if="!connectionStore.activeConnection" class="welcome-page">
               <div class="welcome-content">
-                <img :src="LogoIcon" alt="elastic-search" class="hero-logo" />
-                <h1>elastic-search</h1>
+                <img :src="LogoIcon" alt="elastic-visark" class="hero-logo" />
+                <h1>elastic-visark</h1>
                 <p class="subtitle">Elasticsearch 可视化管理工具</p>
               </div>
             </div>

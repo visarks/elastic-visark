@@ -35,7 +35,7 @@ export default {
   },
   about: {
     title: 'About',
-    name: 'elastic-search',
+    name: 'Elastic VisArk',
     description: 'Elasticsearch Visualization Management Tool',
     version: 'Version',
     checkUpdate: 'Check for Updates',
