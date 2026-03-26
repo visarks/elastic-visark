@@ -12,7 +12,7 @@
       </div>
       <h2 class="app-name">{{ t('about.name') }}</h2>
 
-      <div class="version-text">{{ version }}</div>
+      <div class="version-text">v{{ version }}</div>
 
       <a
         class="github-link"
@@ -23,7 +23,7 @@
         源码地址
       </a>
 
-      <p class="copyright">Copyright © podigua 2025</p>
+      <p class="copyright">Copyright © 2025 podigua</p>
     </div>
   </n-modal>
 </template>
@@ -67,7 +67,7 @@ defineExpose({
 }
 
 .about-logo {
-  margin-bottom: 5px;
+  margin-bottom: 0;
 }
 
 .logo-image {
@@ -87,8 +87,12 @@ defineExpose({
 
 .version-text {
   font-size: 14px;
-  color: #888;
+  color: #333;
   margin-bottom: 5px;
+}
+
+:root[data-theme='dark'] .version-text {
+  color: #ddd;
 }
 
 .github-link {
@@ -98,6 +102,7 @@ defineExpose({
   text-decoration: none;
   margin-bottom: 5px;
   transition: color 0.2s;
+  outline: none;
 
   &:hover {
     color: #63e2b7;
