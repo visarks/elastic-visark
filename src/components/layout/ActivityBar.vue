@@ -6,14 +6,17 @@ import { useSettingsStore } from '@/store/modules/settings'
 import { useConnectionStore } from '@/store/modules/connection'
 import SettingsModal from '@/components/SettingsModal.vue'
 import HistoryModal from '@/components/HistoryModal.vue'
-import AboutDialog from '@/components/AboutDialog.vue'
 
 const settingsStore = useSettingsStore()
 const connectionStore = useConnectionStore()
 
 const settingsModalRef = ref<InstanceType<typeof SettingsModal> | null>(null)
 const historyModalRef = ref<InstanceType<typeof HistoryModal> | null>(null)
-const aboutDialogRef = ref<InstanceType<typeof AboutDialog> | null>(null)
+
+// 定义事件
+const emit = defineEmits<{
+  openAbout: []
+}>()
 
 // 切换主题
 function toggleTheme() {
@@ -37,7 +40,7 @@ function toggleSideTree() {
 
 // 打开关于对话框
 function openAbout() {
-  aboutDialogRef.value?.open()
+  emit('openAbout')
 }
 </script>
 
@@ -103,7 +106,6 @@ function openAbout() {
 
     <SettingsModal ref="settingsModalRef" />
     <HistoryModal ref="historyModalRef" />
-    <AboutDialog ref="aboutDialogRef" />
   </div>
 </template>
 

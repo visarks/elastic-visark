@@ -8,6 +8,15 @@ import { useConnectionStore } from '@/store/modules/connection'
 import { useTabInstanceStore } from '@/store/modules/tabInstance'
 import LogoIcon from '@/assets/logo.svg'
 
+// 定义事件
+const emit = defineEmits<{
+  openAbout: []
+}>()
+
+function handleOpenAbout() {
+  emit('openAbout')
+}
+
 // 异步加载组件
 const OverviewPage = defineAsyncComponent(() => import('@/views/OverviewPage.vue'))
 const NodesPage = defineAsyncComponent(() => import('@/views/NodesPage.vue'))
@@ -86,7 +95,7 @@ watch(
     <div class="main-content">
       <div class="content-layout">
         <!-- 左侧活动栏 -->
-        <activity-bar />
+        <activity-bar @open-about="handleOpenAbout" />
 
         <!-- 左侧树面板 -->
         <div
