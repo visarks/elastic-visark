@@ -1,0 +1,23 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 3: Minimal ES search icon -->
+  <!-- Dark background -->
+  <rect width="1024" height="1024" rx="200" fill="#1a1a2e"/>
+
+  <!-- Search circle -->
+  <circle cx="400" cy="400" r="200" stroke="#FED10A" stroke-width="50" fill="none"/>
+
+  <!-- Handle -->
+  <line x1="550" y1="550" x2="750" y2="750" stroke="#FED10A" stroke-width="50" stroke-linecap="round"/>
+
+  <!-- Data dots pattern inside -->
+  <circle cx="300" cy="350" r="25" fill="#FED10A"/>
+  <circle cx="380" cy="320" r="25" fill="#FED10A"/>
+  <circle cx="460" cy="380" r="25" fill="#FED10A"/>
+  <circle cx="340" cy="420" r="25" fill="#FED10A"/>
+  <circle cx="420" cy="450" r="25" fill="#FED10A"/>
+  <circle cx="300" cy="480" r="25" fill="#FED10A"/>
+  <circle cx="480" cy="320" r="25" fill="#FED10A"/>
+
+  <!-- Small "ES" indicator -->
+  <text x="700" y="280" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#FED10A">ES</text>
+</svg>
