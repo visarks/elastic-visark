@@ -4,7 +4,6 @@
     preset="card"
     style="width: 480px"
     :bordered="false"
-    :closable="false"
   >
     <div class="about-content">
       <div class="about-logo">
@@ -63,7 +62,7 @@ defineExpose({
 <style scoped lang="scss">
 .about-content {
   text-align: center;
-  padding: 24px 16px;
+  padding: 12px 8px;
 }
 
 .about-logo {
@@ -87,6 +86,7 @@ defineExpose({
 
 .version-text {
   font-size: 14px;
+  font-weight: 600;
   color: #333;
   margin-bottom: 5px;
 }
