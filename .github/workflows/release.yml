@@ -89,7 +89,7 @@ jobs:
         with:
           name: windows-${{ matrix.arch }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
 
   create-release:
     needs: release
@@ -111,7 +111,7 @@ jobs:
         with:
           files: |
             artifacts/**/*.dmg
-            artifacts/**/*.msi
+            artifacts/**/*.exe
             artifacts/**/*.deb
             artifacts/**/*.rpm
             artifacts/**/*.AppImage
