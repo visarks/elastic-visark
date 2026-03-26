@@ -287,13 +287,19 @@ jobs:
           # Write private key to temp file
           echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
 
+          # Debug: check if key file exists and has content
+          echo "Private key file size: $(wc -c < /tmp/private.key) bytes"
+          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set: $([ -n \"$TAURI_SIGNING_PRIVATE_KEY_PASSWORD\" ] && echo 'yes' || echo 'no')"
+
           # Function to get signature for a file
           get_signature() {
             local FILE_PATH="$1"
             if [ -f "$FILE_PATH" ] && [ -s /tmp/private.key ]; then
-              # Sign the file and return the signature
-              pnpm tauri signer sign --private-key-path /tmp/private.key "$FILE_PATH" 2>/dev/null || echo ""
+              # Sign the file and extract the public signature
+              echo "Signing: $FILE_PATH" >&2
+              pnpm tauri signer sign --private-key-path /tmp/private.key "$FILE_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1
             else
+              echo "File not found or key empty: $FILE_PATH" >&2
               echo ""
             fi
           }
