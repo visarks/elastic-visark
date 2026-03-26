@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { NTooltip, NIcon } from 'naive-ui'
-import { SettingsOutline, MoonOutline, SunnyOutline, TimeOutline, ServerOutline, InformationCircleOutline } from '@vicons/ionicons5'
+import { ref, h } from 'vue'
+import { NTooltip, NIcon, NDropdown } from 'naive-ui'
+import { SettingsOutline, MoonOutline, SunnyOutline, TimeOutline, ServerOutline, InformationCircleOutline, CloudDownloadOutline } from '@vicons/ionicons5'
 import { useSettingsStore } from '@/store/modules/settings'
 import { useConnectionStore } from '@/store/modules/connection'
 import SettingsModal from '@/components/SettingsModal.vue'
 import HistoryModal from '@/components/HistoryModal.vue'
+import { checkForUpdate } from '@/services/updater'
 
 const settingsStore = useSettingsStore()
 const connectionStore = useConnectionStore()
@@ -38,9 +39,56 @@ function toggleSideTree() {
   connectionStore.toggleSideTree()
 }
 
+// 检查更新
+async function handleCheckUpdate() {
+  const info = await checkForUpdate()
+  if (info && info.available) {
+    // Update notification modal will show automatically via UpdateNotification.vue
+  }
+  // 如果没有更新或出错，不显示提示
+}
+
 // 打开关于对话框
 function openAbout() {
   emit('openAbout')
+}
+
+// 设置下拉菜单选项
+const settingsDropdownOptions = [
+  {
+    label: '设置',
+    key: 'settings',
+    icon: () => h(NIcon, null, { default: () => h(SettingsOutline) })
+  },
+  {
+    label: '检查更新',
+    key: 'checkUpdate',
+    icon: () => h(NIcon, null, { default: () => h(CloudDownloadOutline) })
+  },
+  {
+    type: 'divider',
+    key: 'd1'
+  },
+  {
+    label: '关于',
+    key: 'about',
+    icon: () => h(NIcon, null, { default: () => h(InformationCircleOutline) })
+  }
+]
+
+// 处理下拉菜单选择
+function handleSettingsSelect(key: string) {
+  switch (key) {
+    case 'settings':
+      openSettings()
+      break
+    case 'checkUpdate':
+      handleCheckUpdate()
+      break
+    case 'about':
+      openAbout()
+      break
+  }
 }
 </script>
 
@@ -83,25 +131,22 @@ function openAbout() {
         {{ settingsStore.theme === 'dark' ? '深色主题' : '浅色主题' }}
       </n-tooltip>
 
-      <!-- 关于 -->
-      <n-tooltip placement="right" trigger="hover">
-        <template #trigger>
-          <div class="activity-item" @click="openAbout">
-            <n-icon :component="InformationCircleOutline" size="20" />
-          </div>
-        </template>
-        关于
-      </n-tooltip>
-
-      <!-- 设置图标 -->
-      <n-tooltip placement="right" trigger="hover">
-        <template #trigger>
-          <div class="activity-item" @click="openSettings">
-            <n-icon :component="SettingsOutline" size="20" />
-          </div>
-        </template>
-        设置
-      </n-tooltip>
+      <!-- 设置下拉菜单 -->
+      <n-dropdown
+        trigger="click"
+        :options="settingsDropdownOptions"
+        @select="handleSettingsSelect"
+        placement="right-start"
+      >
+        <n-tooltip placement="right" trigger="hover">
+          <template #trigger>
+            <div class="activity-item">
+              <n-icon :component="SettingsOutline" size="20" />
+            </div>
+          </template>
+          设置
+        </n-tooltip>
+      </n-dropdown>
     </div>
 
     <SettingsModal ref="settingsModalRef" />

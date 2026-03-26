@@ -31,18 +31,6 @@
           <span class="version-value">{{ version }}</span>
         </div>
       </div>
-
-      <a
-        class="check-update-link"
-        href="javascript:;"
-        @click="handleCheckUpdate"
-      >
-        {{ checking ? t('about.checking') : t('about.checkUpdate') }}
-      </a>
-
-      <p v-if="updateMessage" class="update-message" :class="updateMessageType">
-        {{ updateMessage }}
-      </p>
     </div>
   </n-modal>
 </template>
@@ -53,15 +41,11 @@ import { NModal } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getVersion } from '@tauri-apps/api/app'
 import LogoIcon from '@/assets/logo.svg'
-import { checkForUpdate } from '@/services/updater'
 
 const { t } = useI18n()
 
 const showModal = ref(false)
 const version = ref<string>('')
-const checking = ref(false)
-const updateMessage = ref('')
-const updateMessageType = ref<'success' | 'error' | 'info'>('info')
 
 // Get app version
 async function loadVersion() {
@@ -76,33 +60,6 @@ async function loadVersion() {
 function open() {
   showModal.value = true
   loadVersion()
-  updateMessage.value = ''
-}
-
-async function handleCheckUpdate() {
-  checking.value = true
-  updateMessage.value = ''
-
-  try {
-    const info = await checkForUpdate()
-    if (info && info.available) {
-      // Update notification modal will show automatically via UpdateNotification.vue
-      showModal.value = false
-    } else if (info === null) {
-      // Error occurred
-      updateMessage.value = t('about.updateError')
-      updateMessageType.value = 'error'
-    } else {
-      // No update available
-      updateMessage.value = t('about.noUpdate')
-      updateMessageType.value = 'success'
-    }
-  } catch (error) {
-    updateMessage.value = t('about.updateError')
-    updateMessageType.value = 'error'
-  } finally {
-    checking.value = false
-  }
 }
 
 defineExpose({
@@ -184,36 +141,6 @@ defineExpose({
   color: #63e2b7;
 }
 
-.check-update-link {
-  display: block;
-  color: #70c0e8;
-  font-size: 13px;
-  text-decoration: none;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #63e2b7;
-  }
-}
-
-.update-message {
-  margin: 12px 0 0 0;
-  font-size: 13px;
-  text-align: center;
-
-  &.success {
-    color: #63e2b7;
-  }
-
-  &.error {
-    color: #e88080;
-  }
-
-  &.info {
-    color: #70c0e8;
-  }
-}
-
 // Light theme
 :root[data-theme='light'] {
   .app-name {
@@ -241,14 +168,6 @@ defineExpose({
 
   .version-value {
     color: #18a058;
-  }
-
-  .check-update-link {
-    color: #2080f0;
-
-    &:hover {
-      color: #18a058;
-    }
   }
 }
 </style>
