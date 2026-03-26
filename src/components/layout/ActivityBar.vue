@@ -42,14 +42,19 @@ function toggleSideTree() {
 
 // 检查更新
 async function handleCheckUpdate() {
+  console.log('handleCheckUpdate called')
   const info = await checkForUpdate()
+  console.log('checkForUpdate result:', info)
   if (info && info.available) {
     // Update notification modal will show automatically via UpdateNotification.vue
+    console.log('Update available, modal should show')
   } else if (info === null) {
     // Error occurred
+    console.log('Update check returned null')
     message.error('检查更新失败')
   } else {
     // No update available
+    console.log('No update available')
     message.success('当前已是最新版本')
   }
 }

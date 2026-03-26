@@ -20,14 +20,19 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
     updateError.value = null
     const update = await check()
 
-    if (update) {
+    console.log('Update check result:', update)
+
+    // 检查 update 对象是否存在且有可用更新
+    // update 可能存在但 available 可能为 false
+    if (update && update.version) {
       updateAvailable.value = true
       updateInfo.value = {
         available: true,
         version: update.version,
-        date: update.date,
-        body: update.body
+        date: update.date || undefined,
+        body: update.body || undefined
       }
+      console.log('Update available set to true, updateInfo:', updateInfo.value)
       return updateInfo.value
     } else {
       updateAvailable.value = false

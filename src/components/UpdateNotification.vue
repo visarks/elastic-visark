@@ -47,6 +47,15 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
+  NModal,
+  NCollapse,
+  NCollapseItem,
+  NProgress,
+  NAlert,
+  NButton,
+  NSpace
+} from 'naive-ui'
+import {
   updateAvailable,
   updateInfo,
   downloading,
@@ -59,12 +68,16 @@ const { t } = useI18n()
 const showModal = ref(false)
 const readyToInstall = ref(false)
 
+console.log('UpdateNotification mounted, updateAvailable:', updateAvailable.value)
+
 watch(updateAvailable, (available) => {
+  console.log('updateAvailable changed:', available)
   if (available) {
     showModal.value = true
     readyToInstall.value = false
+    console.log('showModal set to true')
   }
-})
+}, { immediate: true })
 
 function closeModal() {
   showModal.value = false

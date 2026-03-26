@@ -15,9 +15,16 @@ const aboutDialogRef = ref<InstanceType<typeof AboutDialog> | null>(null)
 
 onMounted(async () => {
   await settingsStore.loadSettings()
+  console.log('App mounted, will check for update in 3 seconds...')
   // Check for updates after a short delay
-  setTimeout(() => {
-    checkForUpdate()
+  setTimeout(async () => {
+    console.log('Checking for update...')
+    try {
+      const result = await checkForUpdate()
+      console.log('Update check completed:', result)
+    } catch (e) {
+      console.error('Update check error:', e)
+    }
   }, 3000)
 })
 
