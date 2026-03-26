@@ -165,10 +165,12 @@ function handleLogoMenuSelect(key: string) {
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- About Dialog -->
-  <about-dialog v-model:show="showAbout" />
+    <!-- About Dialog - rendered via Teleport -->
+    <teleport to="body">
+      <about-dialog v-model:show="showAbout" />
+    </teleport>
+  </div>
 </template>
 
 <style scoped lang="scss">
