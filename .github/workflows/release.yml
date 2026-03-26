@@ -57,10 +57,12 @@ jobs:
           for f in *.dmg; do
             mv "$f" "elastic-visark-macos-${{ matrix.arch }}-${VERSION}.dmg"
           done
-          # App (for pkg)
+          # macOS app bundle for pkg
           cd ../macos
-          if [ -d "elastic-visark.app" ]; then
-            zip -r "elastic-visark-macos-${{ matrix.arch }}-${VERSION}.app.zip" elastic-visark.app
+          if [ -d "*.app" ]; then
+            APP_NAME=$(ls -d *.app | head -1)
+            # Create pkg
+            pkgbuild --root . --identifier com.elastic.visark --version "${VERSION#v}" --install-location /Applications "elastic-visark-macos-${{ matrix.arch }}-${VERSION}.pkg"
           fi
 
       - name: Upload artifacts
@@ -69,7 +71,7 @@ jobs:
           name: macos-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.pkg
 
   build-windows:
     strategy:
@@ -214,7 +216,7 @@ jobs:
         with:
           files: |
             artifacts/**/*.dmg
-            artifacts/**/*.app.zip
+            artifacts/**/*.pkg
             artifacts/**/*.exe
             artifacts/**/*.msi
             artifacts/**/*.deb

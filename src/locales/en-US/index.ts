@@ -33,18 +33,31 @@ export default {
     dark: 'Dark',
     language: 'Language'
   },
+  about: {
+    title: 'About',
+    name: 'Elastic VisArk',
+    description: 'Elasticsearch Visualization Management Tool',
+    version: 'Version',
+    checkUpdate: 'Check for Updates',
+    checking: 'Checking...',
+    noUpdate: 'You are running the latest version',
+    updateError: 'Failed to check for updates'
+  },
   update: {
     title: 'Software Update',
     available: 'A new version is available',
+    currentVersion: 'Current Version',
+    newVersion: 'New Version',
     version: 'Version',
     date: 'Release Date',
     changelog: 'Changelog',
     downloading: 'Downloading update...',
-    download: 'Download Update',
+    download: 'Download and Install',
     later: 'Remind Later',
     ready: 'Update downloaded successfully',
     readyTitle: 'Ready to Install',
     readyDesc: 'Click the button below to restart and complete the installation',
-    restart: 'Restart and Install'
+    restart: 'Restart and Install',
+    noUpdateFound: 'No updates found'
   }
 }

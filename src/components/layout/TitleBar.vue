@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useConnectionStore } from '@/store/modules/connection'
 import LogoIcon from '@/assets/logo.svg'
+import AboutDialog from '@/components/AboutDialog.vue'
 
+const { t } = useI18n()
 const connectionStore = useConnectionStore()
 
 const appWindow = getCurrentWindow()
@@ -70,7 +73,7 @@ const DOUBLE_CLICK_INTERVAL = 300
 async function startDragging(e: MouseEvent) {
   if (e.button !== 0) return
   const target = e.target as HTMLElement
-  if (target.closest('.window-btn') || target.closest('.n-button') || target.closest('.n-dropdown') || target.closest('.cluster-tag')) return
+  if (target.closest('.window-btn') || target.closest('.n-button') || target.closest('.n-dropdown') || target.closest('.cluster-tag') || target.closest('.app-logo')) return
 
   const now = Date.now()
   if (now - lastClickTime < DOUBLE_CLICK_INTERVAL) {
@@ -87,16 +90,36 @@ async function startDragging(e: MouseEvent) {
     console.error('startDragging error:', err)
   }
 }
+
+// About dialog
+const showAbout = ref(false)
+
+// Logo dropdown menu options
+const logoMenuOptions = computed(() => [
+  {
+    label: t('about.title'),
+    key: 'about'
+  }
+])
+
+// Handle logo menu selection
+function handleLogoMenuSelect(key: string) {
+  if (key === 'about') {
+    showAbout.value = true
+  }
+}
 </script>
 
 <template>
   <div class="titlebar" @mousedown="startDragging">
     <!-- 左侧：Logo 和集群标签 -->
     <div class="titlebar-left">
-      <div class="app-logo" @mousedown.stop>
-        <img :src="LogoIcon" alt="elastic-visark" class="logo-icon" />
-        <span class="logo-text">elastic-visark</span>
-      </div>
+      <n-dropdown trigger="click" :options="logoMenuOptions" @select="handleLogoMenuSelect">
+        <div class="app-logo" @mousedown.stop>
+          <img :src="LogoIcon" alt="elastic-visark" class="logo-icon" />
+          <span class="logo-text">elastic-visark</span>
+        </div>
+      </n-dropdown>
 
       <!-- 已连接的集群标签 -->
       <div class="cluster-tags">
@@ -143,6 +166,9 @@ async function startDragging(e: MouseEvent) {
       </div>
     </div>
   </div>
+
+  <!-- About Dialog -->
+  <about-dialog v-model:show="showAbout" />
 </template>
 
 <style scoped lang="scss">
@@ -171,6 +197,14 @@ async function startDragging(e: MouseEvent) {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 .logo-icon {
@@ -281,6 +315,12 @@ async function startDragging(e: MouseEvent) {
   .titlebar {
     background-color: #f3f3f3;
     border-bottom-color: #ddd;
+  }
+
+  .app-logo {
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
   }
 
   .logo-text {
