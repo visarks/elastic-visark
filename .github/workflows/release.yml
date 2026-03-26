@@ -53,9 +53,15 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Rename artifacts and collect signatures
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           VERSION=${{ github.ref_name }}
           ARCH=${{ matrix.arch }}
+
+          # Write private key to temp file for signing
+          echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
 
           # DMG
           DMG_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
@@ -64,8 +70,9 @@ jobs:
             if [ -f "$f" ]; then
               mv "$f" "elastic-visark-macos-${ARCH}-${VERSION}.dmg"
               # Sign the DMG
-              if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
-                echo "$TAURI_SIGNING_PRIVATE_KEY" | pnpm tauri signer sign --private-key-path - "elastic-visark-macos-${ARCH}-${VERSION}.dmg" > "elastic-visark-macos-${ARCH}-${VERSION}.dmg.sig" 2>/dev/null || true
+              if [ -s /tmp/private.key ]; then
+                echo "Signing DMG: elastic-visark-macos-${ARCH}-${VERSION}.dmg"
+                pnpm tauri signer sign --private-key-path /tmp/private.key "elastic-visark-macos-${ARCH}-${VERSION}.dmg" || echo "Signing failed"
               fi
             fi
           done
@@ -79,6 +86,9 @@ jobs:
 
           # Also check for .sig files from tauri build
           find src-tauri/target -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
+
+          # Clean up private key
+          rm -f /tmp/private.key
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
