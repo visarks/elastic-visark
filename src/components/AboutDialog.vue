@@ -12,7 +12,7 @@
       </div>
       <h2 class="app-name">{{ t('about.name') }}</h2>
 
-      <div class="version-text">{{ t('about.version') }} {{ version }}</div>
+      <div class="version-text">{{ version }}</div>
 
       <a
         class="github-link"
@@ -23,7 +23,7 @@
         源码地址
       </a>
 
-      <p class="copyright">© podigua 2025</p>
+      <p class="copyright">Copyright © podigua 2025</p>
     </div>
   </n-modal>
 </template>
@@ -63,11 +63,11 @@ defineExpose({
 <style scoped lang="scss">
 .about-content {
   text-align: center;
-  padding: 32px 16px;
+  padding: 24px 16px;
 }
 
 .about-logo {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .logo-image {
@@ -78,7 +78,7 @@ defineExpose({
 .app-name {
   font-size: 20px;
   font-weight: 600;
-  margin: 0 0 20px 0;
+  margin: 0 0 10px 0;
   background: linear-gradient(135deg, #63e2b7 0%, #4caf50 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -88,7 +88,7 @@ defineExpose({
 .version-text {
   font-size: 14px;
   color: #888;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .github-link {
@@ -96,7 +96,7 @@ defineExpose({
   color: #70c0e8;
   font-size: 13px;
   text-decoration: none;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   transition: color 0.2s;
 
   &:hover {
@@ -106,7 +106,7 @@ defineExpose({
 
 .copyright {
   font-size: 12px;
-  color: #666;
+  color: #888;
   margin: 0;
 }
 
@@ -128,7 +128,7 @@ defineExpose({
   }
 
   .copyright {
-    color: #999;
+    color: #888;
   }
 }
 </style>
