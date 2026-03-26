@@ -13,6 +13,10 @@
           <div class="changelog" v-html="formatChangelog(updateInfo.body)"></div>
         </n-collapse-item>
       </n-collapse>
+      <!-- 显示错误信息 -->
+      <n-alert v-if="errorMessage" type="error" style="margin-top: 12px">
+        {{ errorMessage }}
+      </n-alert>
     </div>
 
     <div v-else-if="downloading">
@@ -44,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NModal,
@@ -61,20 +65,23 @@ import {
   downloading,
   downloadProgress,
   downloadAndInstall,
-  installAndRestart
+  installAndRestart,
+  updateError
 } from '@/services/updater'
 
 const { t } = useI18n()
 const showModal = ref(false)
 const readyToInstall = ref(false)
+const hasShownModal = ref(false)
 
 console.log('UpdateNotification mounted, updateAvailable:', updateAvailable.value)
 
 watch(updateAvailable, (available) => {
   console.log('updateAvailable changed:', available)
-  if (available) {
+  // 只在首次检测到更新时显示模态框，避免下载失败后重复弹出
+  if (available && !hasShownModal.value) {
     showModal.value = true
-    readyToInstall.value = false
+    hasShownModal.value = true
     console.log('showModal set to true')
   }
 }, { immediate: true })
@@ -91,11 +98,15 @@ async function startDownload() {
   if (success) {
     readyToInstall.value = true
   }
+  // 下载失败时不关闭模态框，让用户可以看到错误信息
 }
 
 async function restartApp() {
   await installAndRestart()
 }
+
+// 计算错误信息
+const errorMessage = computed(() => updateError.value)
 
 function formatDate(dateStr: string): string {
   try {

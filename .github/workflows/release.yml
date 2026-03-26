@@ -276,17 +276,23 @@ jobs:
           version: 9
 
       - name: Create update JSON files with signatures
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           VERSION=${{ github.ref_name }}
           VERSION_NUM="${VERSION#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+          # Write private key to temp file
+          echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
+
           # Function to get signature for a file
           get_signature() {
             local FILE_PATH="$1"
-            if [ -f "$FILE_PATH" ] && [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
+            if [ -f "$FILE_PATH" ] && [ -s /tmp/private.key ]; then
               # Sign the file and return the signature
-              echo "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | pnpm tauri signer sign --private-key-path - "$FILE_PATH" 2>/dev/null || echo ""
+              pnpm tauri signer sign --private-key-path /tmp/private.key "$FILE_PATH" 2>/dev/null || echo ""
             else
               echo ""
             fi
@@ -377,6 +383,9 @@ jobs:
           echo ""
           echo "Contents of darwin-x86_64-update.json:"
           cat darwin-x86_64-update.json
+
+          # Clean up private key
+          rm -f /tmp/private.key
 
       - name: Create release
         uses: softprops/action-gh-release@v2
