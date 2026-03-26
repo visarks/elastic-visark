@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, h } from 'vue'
-import { NTooltip, NIcon, NDropdown } from 'naive-ui'
+import { NTooltip, NIcon, NDropdown, useMessage } from 'naive-ui'
 import { SettingsOutline, MoonOutline, SunnyOutline, TimeOutline, ServerOutline, InformationCircleOutline, CloudDownloadOutline } from '@vicons/ionicons5'
 import { useSettingsStore } from '@/store/modules/settings'
 import { useConnectionStore } from '@/store/modules/connection'
@@ -10,6 +10,7 @@ import { checkForUpdate } from '@/services/updater'
 
 const settingsStore = useSettingsStore()
 const connectionStore = useConnectionStore()
+const message = useMessage()
 
 const settingsModalRef = ref<InstanceType<typeof SettingsModal> | null>(null)
 const historyModalRef = ref<InstanceType<typeof HistoryModal> | null>(null)
@@ -44,8 +45,13 @@ async function handleCheckUpdate() {
   const info = await checkForUpdate()
   if (info && info.available) {
     // Update notification modal will show automatically via UpdateNotification.vue
+  } else if (info === null) {
+    // Error occurred
+    message.error('检查更新失败')
+  } else {
+    // No update available
+    message.success('当前已是最新版本')
   }
-  // 如果没有更新或出错，不显示提示
 }
 
 // 打开关于对话框
