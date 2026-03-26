@@ -622,6 +622,7 @@ onMounted(() => {
           block-line
           :node-props="nodeProps"
           @update:expanded-keys="handleExpand"
+          class="ellipsis-tree"
         >
           <template #empty>
             <n-empty description="暂无连接" size="small" />
@@ -747,6 +748,15 @@ onMounted(() => {
   flex: 1;
   overflow: auto;
   padding: 8px;
+}
+
+// 树节点文字溢出样式
+.ellipsis-tree {
+  :deep(.n-tree-node-content__text) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .tree-label {

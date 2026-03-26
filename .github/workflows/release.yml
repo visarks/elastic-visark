@@ -226,6 +226,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "darwin-aarch64": {
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-aarch64-${VERSION}.dmg"
               }
             }
@@ -239,6 +240,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "darwin-x86_64": {
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-x64-${VERSION}.dmg"
               }
             }
@@ -252,6 +254,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "win32-x86_64": {
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-x64-${VERSION}-setup.exe"
               }
             }
@@ -265,6 +268,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "win32-aarch64": {
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-aarch64-${VERSION}-setup.exe"
               }
             }
@@ -278,6 +282,7 @@ jobs:
             "date": "${DATE}",
             "platforms": {
               "linux-x86_64": {
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-linux-x64-${VERSION}.AppImage"
               }
             }

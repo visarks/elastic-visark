@@ -45,7 +45,37 @@ const connectionStore = useConnectionStore()
 const tabInstanceStore = useTabInstanceStore()
 
 // 左侧面板宽度
-const sideTreeWidth = ref(240)
+const sideTreeWidth = ref(290)
+
+// 拖拽调整宽度
+const isDragging = ref(false)
+const startX = ref(0)
+const startWidth = ref(0)
+
+function startResize(e: MouseEvent) {
+  isDragging.value = true
+  startX.value = e.clientX
+  startWidth.value = sideTreeWidth.value
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+}
+
+function handleResize(e: MouseEvent) {
+  if (!isDragging.value) return
+  const diff = e.clientX - startX.value
+  const newWidth = Math.max(200, Math.min(600, startWidth.value + diff))
+  sideTreeWidth.value = newWidth
+}
+
+function stopResize() {
+  isDragging.value = false
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
 
 // 当前激活的标签
 const activeTab = computed(() => tabInstanceStore.activeTab)
@@ -104,6 +134,12 @@ watch(
           :style="{ width: connectionStore.showSideTree ? `${sideTreeWidth}px` : '0px' }"
         >
           <side-tree v-show="connectionStore.showSideTree" />
+          <!-- 拖拽调整宽度的把手 -->
+          <div
+            v-if="connectionStore.showSideTree"
+            class="resize-handle"
+            @mousedown="startResize"
+          ></div>
         </div>
 
         <!-- 右侧内容区 -->
@@ -167,6 +203,22 @@ watch(
 
   &.collapsed {
     border-right: none;
+  }
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background-color: transparent;
+  transition: background-color 0.2s;
+  z-index: 10;
+
+  &:hover {
+    background-color: #63e2b7;
   }
 }
 
@@ -241,6 +293,12 @@ watch(
 
   .side-tree-wrapper {
     border-right-color: #e0e0e0;
+  }
+
+  .resize-handle {
+    &:hover {
+      background-color: #18a058;
+    }
   }
 
   .collapse-btn,
