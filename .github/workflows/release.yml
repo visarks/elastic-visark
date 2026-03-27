@@ -78,6 +78,12 @@ jobs:
                 TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH"
                 echo "Signature file generated:"
                 ls -la "$NEW_PATH.sig" || echo "Signature file not found"
+
+                # Save signature to a dedicated file for upload
+                SIG_FILE_NAME="elastic-visark-macos-${ARCH}-${VERSION}.dmg.signature"
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1 > "$DMG_DIR/$SIG_FILE_NAME"
+                echo "Saved signature to: $DMG_DIR/$SIG_FILE_NAME"
+                cat "$DMG_DIR/$SIG_FILE_NAME"
               fi
             fi
           done
@@ -93,8 +99,8 @@ jobs:
         run: |
           echo "Files to upload from DMG directory:"
           ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
-          echo "SIG files:"
-          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.sig || echo "No SIG files found"
+          echo "Signature files:"
+          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.signature || echo "No signature files found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -102,7 +108,7 @@ jobs:
           name: macos-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.signature
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.pkg
           if-no-files-found: warn
 
@@ -292,31 +298,25 @@ jobs:
 
           # Debug: show artifact structure
           echo "Artifacts structure:"
-          find artifacts -type f -name "*.sig" -o -name "*.dmg" | head -20
+          find artifacts -type f \( -name "*.signature" -o -name "*.dmg" \) | head -20
           echo "---"
           ls -R artifacts
 
-          # Function to read signature from .sig file
+          # Function to read signature from .signature file
           get_signature() {
             local FILE_PATH="$1"
-            local SIG_FILE="${FILE_PATH}.sig"
+            local SIG_FILE="${FILE_PATH}.signature"
             echo "Looking for signature file: $SIG_FILE"
             if [ -f "$SIG_FILE" ]; then
-              echo "Found signature file, content:"
+              echo "Found signature file!"
               cat "$SIG_FILE"
             else
               echo "Signature file not found!"
-              # Try to find any .sig file in the same directory
-              local DIR=$(dirname "$FILE_PATH")
-              echo "Looking for .sig files in $DIR:"
-              ls -la "$DIR"/*.sig 2>/dev/null || echo "No .sig files in directory"
             fi
           }
 
           # macOS x64
           MACOS_X64_DMG="artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.dmg"
-          echo "Looking for DMG: $MACOS_X64_DMG"
-          ls -la "$MACOS_X64_DMG" || echo "DMG not found"
           MACOS_X64_SIG=$(get_signature "$MACOS_X64_DMG")
           echo "macOS x64 signature: $MACOS_X64_SIG"
           cat > darwin-x86_64-update.json << EOF
