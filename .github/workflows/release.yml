@@ -63,7 +63,6 @@ jobs:
           # DMG
           DMG_DIR="$(pwd)/src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
           echo "DMG directory: $DMG_DIR"
-          ls -la "$DMG_DIR" || echo "DMG directory not found"
 
           for f in "$DMG_DIR"/*.dmg; do
             if [ -f "$f" ]; then
@@ -72,18 +71,17 @@ jobs:
               NEW_PATH="$DMG_DIR/$NEW_NAME"
               echo "Renaming $BASENAME to $NEW_NAME"
               mv "$f" "$NEW_PATH"
-              # Sign the DMG
+
+              # Sign the DMG and capture signature
               if [ -s /tmp/private.key ]; then
                 echo "Signing DMG: $NEW_PATH"
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH"
-                echo "Signature file generated:"
-                ls -la "$NEW_PATH.sig" || echo "Signature file not found"
+                SIGNATURE=$(TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1)
+                echo "Signature: $SIGNATURE"
 
-                # Save signature to a dedicated file for upload
-                SIG_FILE_NAME="elastic-visark-macos-${ARCH}-${VERSION}.dmg.signature"
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1 > "$DMG_DIR/$SIG_FILE_NAME"
-                echo "Saved signature to: $DMG_DIR/$SIG_FILE_NAME"
-                cat "$DMG_DIR/$SIG_FILE_NAME"
+                # Save signature to file
+                SIG_FILE="$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature"
+                echo "$SIGNATURE" > "$SIG_FILE"
+                echo "Saved signature to: $SIG_FILE"
               fi
             fi
           done
@@ -99,8 +97,6 @@ jobs:
         run: |
           echo "Files to upload from DMG directory:"
           ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
-          echo "Signature files:"
-          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.signature || echo "No signature files found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -298,26 +294,20 @@ jobs:
 
           # Debug: show artifact structure
           echo "Artifacts structure:"
-          find artifacts -type f \( -name "*.signature" -o -name "*.dmg" \) | head -20
-          echo "---"
           ls -R artifacts
 
           # Function to read signature from .signature file
           get_signature() {
-            local FILE_PATH="$1"
-            local SIG_FILE="${FILE_PATH}.signature"
-            echo "Looking for signature file: $SIG_FILE"
+            local SIG_FILE="$1"
             if [ -f "$SIG_FILE" ]; then
-              echo "Found signature file!"
               cat "$SIG_FILE"
             else
-              echo "Signature file not found!"
+              echo ""
             fi
           }
 
           # macOS x64
-          MACOS_X64_DMG="artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.dmg"
-          MACOS_X64_SIG=$(get_signature "$MACOS_X64_DMG")
+          MACOS_X64_SIG=$(get_signature "artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.signature")
           echo "macOS x64 signature: $MACOS_X64_SIG"
           cat > darwin-x86_64-update.json << EOF
           {
@@ -333,8 +323,7 @@ jobs:
           EOF
 
           # macOS aarch64
-          MACOS_AARCH64_DMG="artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.dmg"
-          MACOS_AARCH64_SIG=$(get_signature "$MACOS_AARCH64_DMG")
+          MACOS_AARCH64_SIG=$(get_signature "artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.signature")
           cat > darwin-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
@@ -348,16 +337,14 @@ jobs:
           }
           EOF
 
-          # Windows x64
-          WINDOWS_X64_EXE="artifacts/windows-x64/elastic-visark-windows-x64-${VERSION}-setup.exe"
-          WINDOWS_X64_SIG=$(get_signature "$WINDOWS_X64_EXE")
+          # Windows x64 (no signature for now)
           cat > win32-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "win32-x86_64": {
-                "signature": "${WINDOWS_X64_SIG}",
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-x64-${VERSION}-setup.exe"
               }
             }
@@ -365,15 +352,13 @@ jobs:
           EOF
 
           # Windows aarch64
-          WINDOWS_AARCH64_EXE="artifacts/windows-aarch64/elastic-visark-windows-aarch64-${VERSION}-setup.exe"
-          WINDOWS_AARCH64_SIG=$(get_signature "$WINDOWS_AARCH64_EXE")
           cat > win32-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "win32-aarch64": {
-                "signature": "${WINDOWS_AARCH64_SIG}",
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-aarch64-${VERSION}-setup.exe"
               }
             }
@@ -381,15 +366,13 @@ jobs:
           EOF
 
           # Linux x64
-          LINUX_X64_APPIMAGE="artifacts/linux-x64/elastic-visark-linux-x64-${VERSION}.AppImage"
-          LINUX_X64_SIG=$(get_signature "$LINUX_X64_APPIMAGE")
           cat > linux-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "linux-x86_64": {
-                "signature": "${LINUX_X64_SIG}",
+                "signature": "",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-linux-x64-${VERSION}.AppImage"
               }
             }
