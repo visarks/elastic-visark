@@ -53,18 +53,12 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Rename artifacts and collect signatures
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           VERSION=${{ github.ref_name }}
           ARCH=${{ matrix.arch }}
 
-          # Write private key to temp file for signing
-          echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
-
-          # Unset env var to avoid conflict with --private-key-path
-          unset TAURI_SIGNING_PRIVATE_KEY
+          # Write private key to temp file for signing (directly from secrets, no newline)
+          printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
 
           # DMG
           DMG_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
@@ -75,7 +69,7 @@ jobs:
               # Sign the DMG
               if [ -s /tmp/private.key ]; then
                 echo "Signing DMG: elastic-visark-macos-${ARCH}-${VERSION}.dmg"
-                pnpm tauri signer sign --private-key-path /tmp/private.key "elastic-visark-macos-${ARCH}-${VERSION}.dmg" || echo "Signing failed"
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "elastic-visark-macos-${ARCH}-${VERSION}.dmg" || echo "Signing failed"
               fi
             fi
           done
@@ -289,23 +283,17 @@ jobs:
           version: 9
 
       - name: Create update JSON files with signatures
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           VERSION=${{ github.ref_name }}
           VERSION_NUM="${VERSION#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Write private key to temp file
-          echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
-
-          # Unset env var to avoid conflict with --private-key-path
-          unset TAURI_SIGNING_PRIVATE_KEY
+          # Write private key to temp file (no newline)
+          printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
 
           # Debug: check if key file exists and has content
           echo "Private key file size: $(wc -c < /tmp/private.key) bytes"
-          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set: $([ -n \"$TAURI_SIGNING_PRIVATE_KEY_PASSWORD\" ] && echo 'yes' || echo 'no')"
+          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set: $([ -n \"${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}\" ] && echo 'yes' || echo 'no')"
 
           # Function to get signature for a file
           get_signature() {
@@ -313,7 +301,7 @@ jobs:
             if [ -f "$FILE_PATH" ] && [ -s /tmp/private.key ]; then
               # Sign the file and extract the public signature
               echo "Signing: $FILE_PATH" >&2
-              pnpm tauri signer sign --private-key-path /tmp/private.key "$FILE_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1
+              TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$FILE_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1
             else
               echo "File not found or key empty: $FILE_PATH" >&2
               echo ""
