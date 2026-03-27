@@ -52,52 +52,21 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Rename artifacts and collect signatures
+      - name: Show generated files
         run: |
-          VERSION=${{ github.ref_name }}
-          ARCH=${{ matrix.arch }}
-
-          printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
-          DMG_DIR="$(pwd)/src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
-          echo "DMG directory: $DMG_DIR"
-
-          for f in "$DMG_DIR"/*.dmg; do
-            if [ -f "$f" ]; then
-              NEW_NAME="elastic-visark-macos-${ARCH}-${VERSION}.dmg"
-              NEW_PATH="$DMG_DIR/$NEW_NAME"
-              echo "Renaming $(basename "$f") to $NEW_NAME"
-              mv "$f" "$NEW_PATH"
-
-              # Sign DMG - generates $NEW_PATH.sig automatically
-              if [ -s /tmp/private.key ]; then
-                echo "Signing DMG: $NEW_PATH"
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" \
-                pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH"
-                
-                # Rename the auto-generated .sig file
-                if [ -f "$NEW_PATH.sig" ]; then
-                  mv "$NEW_PATH.sig" "$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.sig"
-                  echo "✓ Signature file created: elastic-visark-macos-${ARCH}-${VERSION}.sig"
-                else
-                  echo "ERROR: .sig file not found after signing!" >&2
-                  exit 1
-                fi
-              fi
-            fi
-          done
-
-          echo "Final DMG directory contents:"
-          ls -la "$DMG_DIR"
-          rm -f /tmp/private.key
+          echo "=== macOS bundle directory ==="
+          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/macos/ || true
+          echo "=== DMG directory ==="
+          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-${{ matrix.arch }}
           path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.sig  # CRITICAL: Upload .sig not .signature
-            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.pkg
           if-no-files-found: warn
 
   build-windows:
@@ -143,31 +112,13 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Rename artifacts
+      - name: Show generated files
         shell: bash
         run: |
-          VERSION=${{ github.ref_name }}
-          ARCH=${{ matrix.arch }}
-
-          # NSIS (exe)
-          NSIS_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/nsis"
-          cd "$NSIS_DIR"
-          for f in *.exe; do
-            [ -f "$f" ] && mv "$f" "elastic-visark-windows-${ARCH}-${VERSION}-setup.exe"
-          done
-          cd -
-
-          # MSI
-          MSI_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/msi"
-          cd "$MSI_DIR"
-          for f in *.msi; do
-            [ -f "$f" ] && mv "$f" "elastic-visark-windows-${ARCH}-${VERSION}.msi"
-          done
-          cd -
-
-          # Copy .sig files to signatures directory
-          mkdir -p signatures
-          find src-tauri/target -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
+          echo "=== NSIS directory ==="
+          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/nsis/ || true
+          echo "=== MSI directory ==="
+          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/msi/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -175,8 +126,10 @@ jobs:
           name: windows-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
-            signatures/*.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi.sig
+          if-no-files-found: warn
 
   build-linux:
     runs-on: ubuntu-22.04
@@ -216,31 +169,21 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Rename packages
+      - name: Show generated files
         run: |
-          VERSION=${{ github.ref_name }}
-
-          cd src-tauri/target/release/bundle/deb && \
-            for f in *.deb; do [ -f "$f" ] && mv "$f" "elastic-visark-linux-x64-${VERSION}.deb"; done && cd -
-          
-          cd src-tauri/target/release/bundle/rpm && \
-            for f in *.rpm; do [ -f "$f" ] && mv "$f" "elastic-visark-linux-x64-${VERSION}.rpm"; done && cd -
-          
-          cd src-tauri/target/release/bundle/appimage && \
-            for f in *.AppImage; do [ -f "$f" ] && mv "$f" "elastic-visark-linux-x64-${VERSION}.AppImage"; done && cd -
-
-          mkdir -p signatures
-          find src-tauri/target -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
+          echo "=== AppImage directory ==="
+          ls -la src-tauri/target/release/bundle/appimage/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-x64
           path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.AppImage.sig
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/rpm/*.rpm
-            src-tauri/target/release/bundle/appimage/*.AppImage
-            signatures/*.sig
+          if-no-files-found: warn
 
   create-release:
     needs: [build-macos, build-windows, build-linux]
@@ -251,26 +194,27 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create update JSON files with signatures
+      - name: Show artifact structure
+        run: ls -R artifacts
+
+      - name: Create update JSON files
         run: |
           VERSION=${{ github.ref_name }}
           VERSION_NUM="${VERSION#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Read pure base64 signature from .sig file (remove newlines)
+          # Function to read signature
           get_signature() {
             local SIG_FILE="$1"
             if [ -f "$SIG_FILE" ]; then
               cat "$SIG_FILE" | tr -d '\n'
             else
-              echo "WARNING: Signature file missing: $SIG_FILE" >&2
               echo ""
             fi
           }
 
-          # macOS x64
-          MACOS_X64_SIG=$(get_signature "artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.sig")
-          echo "macOS x64 signature length: ${#MACOS_X64_SIG}"
+          # macOS x64 - use .app.tar.gz.sig
+          MACOS_X64_SIG=$(get_signature "$(ls artifacts/macos-x64/*.tar.gz.sig 2>/dev/null | head -1)")
           cat > darwin-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
@@ -278,15 +222,14 @@ jobs:
             "platforms": {
               "darwin-x86_64": {
                 "signature": "${MACOS_X64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-x64-${VERSION}.dmg"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_x64.app.tar.gz"
               }
             }
           }
           EOF
 
           # macOS aarch64
-          MACOS_AARCH64_SIG=$(get_signature "artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.sig")
-          echo "macOS aarch64 signature length: ${#MACOS_AARCH64_SIG}"
+          MACOS_AARCH64_SIG=$(get_signature "$(ls artifacts/macos-aarch64/*.tar.gz.sig 2>/dev/null | head -1)")
           cat > darwin-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
@@ -294,70 +237,118 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "${MACOS_AARCH64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-aarch64-${VERSION}.dmg"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_aarch64.app.tar.gz"
               }
             }
           }
           EOF
 
-          # Windows x64 (add signature if needed later)
+          # Windows x64
+          WINDOWS_X64_SIG=$(get_signature "$(ls artifacts/windows-x64/*.exe.sig 2>/dev/null | head -1)")
           cat > win32-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "win32-x86_64": {
-                "signature": "",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-x64-${VERSION}-setup.exe"
+                "signature": "${WINDOWS_X64_SIG}",
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_x64-setup.exe"
               }
             }
           }
           EOF
 
           # Windows aarch64
+          WINDOWS_AARCH64_SIG=$(get_signature "$(ls artifacts/windows-aarch64/*.exe.sig 2>/dev/null | head -1)")
           cat > win32-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "win32-aarch64": {
-                "signature": "",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-windows-aarch64-${VERSION}-setup.exe"
+                "signature": "${WINDOWS_AARCH64_SIG}",
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_aarch64-setup.exe"
               }
             }
           }
           EOF
 
           # Linux x64
+          LINUX_X64_SIG=$(get_signature "$(ls artifacts/linux-x64/*.AppImage.sig 2>/dev/null | head -1)")
           cat > linux-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "linux-x86_64": {
-                "signature": "",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-linux-x64-${VERSION}.AppImage"
+                "signature": "${LINUX_X64_SIG}",
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_x64.AppImage"
               }
             }
           }
           EOF
 
-          echo "✅ Created update JSON files:"
+          echo "Created update JSON files:"
           ls -la *-update.json
-          echo -e "\n🔍 Sample signature content (first 100 chars):"
-          echo "${MACOS_X64_SIG}" | cut -c1-100
+
+      - name: Rename artifacts for release
+        run: |
+          VERSION=${{ github.ref_name }}
+
+          # macOS
+          for arch in x64 aarch64; do
+            # Rename .app.tar.gz
+            tar_file=$(ls artifacts/macos-${arch}/*.tar.gz 2>/dev/null | head -1)
+            if [ -n "$tar_file" ]; then
+              mv "$tar_file" "elastic-visark_${arch}.app.tar.gz"
+            fi
+            # Rename .dmg
+            dmg_file=$(ls artifacts/macos-${arch}/*.dmg 2>/dev/null | head -1)
+            if [ -n "$dmg_file" ]; then
+              mv "$dmg_file" "elastic-visark_${arch}-${VERSION}.dmg"
+            fi
+          done
+
+          # Windows
+          for arch in x64 aarch64; do
+            exe_file=$(ls artifacts/windows-${arch}/*.exe 2>/dev/null | grep -v '.sig' | head -1)
+            if [ -n "$exe_file" ]; then
+              mv "$exe_file" "elastic-visark_${arch}-setup.exe"
+            fi
+            msi_file=$(ls artifacts/windows-${arch}/*.msi 2>/dev/null | grep -v '.sig' | head -1)
+            if [ -n "$msi_file" ]; then
+              mv "$msi_file" "elastic-visark_${arch}-${VERSION}.msi"
+            fi
+          done
+
+          # Linux
+          appimage_file=$(ls artifacts/linux-x64/*.AppImage 2>/dev/null | grep -v '.sig' | head -1)
+          if [ -n "$appimage_file" ]; then
+            mv "$appimage_file" "elastic-visark_x64.AppImage"
+          fi
+          deb_file=$(ls artifacts/linux-x64/*.deb 2>/dev/null | head -1)
+          if [ -n "$deb_file" ]; then
+            mv "$deb_file" "elastic-visark_x64-${VERSION}.deb"
+          fi
+          rpm_file=$(ls artifacts/linux-x64/*.rpm 2>/dev/null | head -1)
+          if [ -n "$rpm_file" ]; then
+            mv "$rpm_file" "elastic-visark_x64-${VERSION}.rpm"
+          fi
+
+          echo "Files for release:"
+          ls -la *.tar.gz *.dmg *.exe *.msi *.AppImage *.deb *.rpm *-update.json 2>/dev/null || true
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.pkg
-            artifacts/**/*.exe
-            artifacts/**/*.msi
-            artifacts/**/*.deb
-            artifacts/**/*.rpm
-            artifacts/**/*.AppImage
+            *.tar.gz
+            *.dmg
+            *.exe
+            *.msi
+            *.AppImage
+            *.deb
+            *.rpm
             *-update.json
           draft: true
           generate_release_notes: true
