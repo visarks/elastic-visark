@@ -213,7 +213,7 @@ jobs:
             fi
           }
 
-          # macOS x64 - use .app.tar.gz.sig
+          # macOS x64
           MACOS_X64_SIG=$(get_signature "artifacts/macos-x64" "*.tar.gz.sig")
           cat > darwin-x86_64-update.json << EOF
           {
@@ -222,7 +222,7 @@ jobs:
             "platforms": {
               "darwin-x86_64": {
                 "signature": "${MACOS_X64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_x64.app.tar.gz"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_darwin_x64-${VERSION}.tar.gz"
               }
             }
           }
@@ -237,7 +237,7 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "${MACOS_AARCH64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_aarch64.app.tar.gz"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_darwin_aarch64-${VERSION}.tar.gz"
               }
             }
           }
@@ -252,7 +252,7 @@ jobs:
             "platforms": {
               "win32-x86_64": {
                 "signature": "${WINDOWS_X64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_x64-setup.exe"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_windows_x64-${VERSION}.exe"
               }
             }
           }
@@ -267,7 +267,7 @@ jobs:
             "platforms": {
               "win32-aarch64": {
                 "signature": "${WINDOWS_AARCH64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_aarch64-setup.exe"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_windows_aarch64-${VERSION}.exe"
               }
             }
           }
@@ -282,7 +282,7 @@ jobs:
             "platforms": {
               "linux-x86_64": {
                 "signature": "${LINUX_X64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_x64.AppImage"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark_linux_x64-${VERSION}.AppImage"
               }
             }
           }
@@ -297,67 +297,71 @@ jobs:
 
           # macOS
           for arch in x64 aarch64; do
-            # Find and rename .app.tar.gz (search recursively in artifact directory)
+            platform="darwin"
+            # Find and rename .app.tar.gz
             tar_file=$(find artifacts/macos-${arch} -name "*.tar.gz" ! -name "*.sig" 2>/dev/null | head -1)
             if [ -n "$tar_file" ]; then
-              mv "$tar_file" "elastic-visark_${arch}.app.tar.gz"
+              mv "$tar_file" "elastic-visark_${platform}_${arch}-${VERSION}.tar.gz"
             fi
             # Find and rename .tar.gz.sig
             sig_file=$(find artifacts/macos-${arch} -name "*.tar.gz.sig" 2>/dev/null | head -1)
             if [ -n "$sig_file" ]; then
-              mv "$sig_file" "elastic-visark_${arch}.app.tar.gz.sig"
+              mv "$sig_file" "elastic-visark_${platform}_${arch}-${VERSION}.tar.gz.sig"
             fi
             # Find and rename .dmg
             dmg_file=$(find artifacts/macos-${arch} -name "*.dmg" 2>/dev/null | head -1)
             if [ -n "$dmg_file" ]; then
-              mv "$dmg_file" "elastic-visark_${arch}-${VERSION}.dmg"
+              mv "$dmg_file" "elastic-visark_${platform}_${arch}-${VERSION}.dmg"
             fi
           done
 
           # Windows
           for arch in x64 aarch64; do
-            # Find and rename .exe (NSIS installer, not .sig)
+            platform="windows"
+            # Find and rename .exe (NSIS installer)
             exe_file=$(find artifacts/windows-${arch} -name "*.exe" ! -name "*.sig" 2>/dev/null | head -1)
             if [ -n "$exe_file" ]; then
-              mv "$exe_file" "elastic-visark_${arch}-setup.exe"
+              mv "$exe_file" "elastic-visark_${platform}_${arch}-${VERSION}.exe"
             fi
             # Find and rename .exe.sig
             exe_sig_file=$(find artifacts/windows-${arch} -name "*.exe.sig" 2>/dev/null | head -1)
             if [ -n "$exe_sig_file" ]; then
-              mv "$exe_sig_file" "elastic-visark_${arch}-setup.exe.sig"
+              mv "$exe_sig_file" "elastic-visark_${platform}_${arch}-${VERSION}.exe.sig"
             fi
             # Find and rename .msi
             msi_file=$(find artifacts/windows-${arch} -name "*.msi" ! -name "*.sig" 2>/dev/null | head -1)
             if [ -n "$msi_file" ]; then
-              mv "$msi_file" "elastic-visark_${arch}-${VERSION}.msi"
+              mv "$msi_file" "elastic-visark_${platform}_${arch}-${VERSION}.msi"
             fi
             # Find and rename .msi.sig
             msi_sig_file=$(find artifacts/windows-${arch} -name "*.msi.sig" 2>/dev/null | head -1)
             if [ -n "$msi_sig_file" ]; then
-              mv "$msi_sig_file" "elastic-visark_${arch}-${VERSION}.msi.sig"
+              mv "$msi_sig_file" "elastic-visark_${platform}_${arch}-${VERSION}.msi.sig"
             fi
           done
 
           # Linux
+          platform="linux"
+          arch="x64"
           # Find and rename .AppImage
           appimage_file=$(find artifacts/linux-x64 -name "*.AppImage" ! -name "*.sig" 2>/dev/null | head -1)
           if [ -n "$appimage_file" ]; then
-            mv "$appimage_file" "elastic-visark_x64.AppImage"
+            mv "$appimage_file" "elastic-visark_${platform}_${arch}-${VERSION}.AppImage"
           fi
           # Find and rename .AppImage.sig
           appimage_sig_file=$(find artifacts/linux-x64 -name "*.AppImage.sig" 2>/dev/null | head -1)
           if [ -n "$appimage_sig_file" ]; then
-            mv "$appimage_sig_file" "elastic-visark_x64.AppImage.sig"
+            mv "$appimage_sig_file" "elastic-visark_${platform}_${arch}-${VERSION}.AppImage.sig"
           fi
           # Find and rename .deb
           deb_file=$(find artifacts/linux-x64 -name "*.deb" 2>/dev/null | head -1)
           if [ -n "$deb_file" ]; then
-            mv "$deb_file" "elastic-visark_x64-${VERSION}.deb"
+            mv "$deb_file" "elastic-visark_${platform}_${arch}-${VERSION}.deb"
           fi
           # Find and rename .rpm
           rpm_file=$(find artifacts/linux-x64 -name "*.rpm" 2>/dev/null | head -1)
           if [ -n "$rpm_file" ]; then
-            mv "$rpm_file" "elastic-visark_x64-${VERSION}.rpm"
+            mv "$rpm_file" "elastic-visark_${platform}_${arch}-${VERSION}.rpm"
           fi
 
           echo "Files for release:"
