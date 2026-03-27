@@ -94,8 +94,8 @@ jobs:
         with:
           name: macos-${{ matrix.arch }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/elastic-visark-macos-${{ matrix.arch }}-${{ github.ref_name }}.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/elastic-visark-macos-${{ matrix.arch }}-${{ github.ref_name }}.dmg.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.pkg
 
   build-windows:
