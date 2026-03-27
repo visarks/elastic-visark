@@ -63,6 +63,9 @@ jobs:
           # Write private key to temp file for signing
           echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
 
+          # Unset env var to avoid conflict with --private-key-path
+          unset TAURI_SIGNING_PRIVATE_KEY
+
           # DMG
           DMG_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
           cd "$DMG_DIR"
@@ -296,6 +299,9 @@ jobs:
 
           # Write private key to temp file
           echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
+
+          # Unset env var to avoid conflict with --private-key-path
+          unset TAURI_SIGNING_PRIVATE_KEY
 
           # Debug: check if key file exists and has content
           echo "Private key file size: $(wc -c < /tmp/private.key) bytes"
