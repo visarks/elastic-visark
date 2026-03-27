@@ -57,19 +57,24 @@ jobs:
           VERSION=${{ github.ref_name }}
           ARCH=${{ matrix.arch }}
 
-          # Write private key to temp file for signing (directly from secrets, no newline)
+          # Write private key to temp file for signing (no newline)
           printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
 
           # DMG
           DMG_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          echo "DMG directory contents:"
+          ls -la "$DMG_DIR" || echo "DMG directory not found"
+
           cd "$DMG_DIR"
           for f in *.dmg; do
             if [ -f "$f" ]; then
-              mv "$f" "elastic-visark-macos-${ARCH}-${VERSION}.dmg"
+              NEW_NAME="elastic-visark-macos-${ARCH}-${VERSION}.dmg"
+              echo "Renaming $f to $NEW_NAME"
+              mv "$f" "$NEW_NAME"
               # Sign the DMG
               if [ -s /tmp/private.key ]; then
-                echo "Signing DMG: elastic-visark-macos-${ARCH}-${VERSION}.dmg"
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "elastic-visark-macos-${ARCH}-${VERSION}.dmg" || echo "Signing failed"
+                echo "Signing DMG: $NEW_NAME"
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_NAME" || echo "Signing failed"
               fi
             fi
           done
