@@ -57,44 +57,38 @@ jobs:
           VERSION=${{ github.ref_name }}
           ARCH=${{ matrix.arch }}
 
-          # Write private key to temp file for signing (no newline)
           printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
-
-          # DMG
           DMG_DIR="$(pwd)/src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
           echo "DMG directory: $DMG_DIR"
 
           for f in "$DMG_DIR"/*.dmg; do
             if [ -f "$f" ]; then
-              BASENAME=$(basename "$f")
               NEW_NAME="elastic-visark-macos-${ARCH}-${VERSION}.dmg"
               NEW_PATH="$DMG_DIR/$NEW_NAME"
-              echo "Renaming $BASENAME to $NEW_NAME"
+              echo "Renaming $(basename "$f") to $NEW_NAME"
               mv "$f" "$NEW_PATH"
 
-              # Sign the DMG and capture signature
+              # Sign DMG - generates $NEW_PATH.sig automatically
               if [ -s /tmp/private.key ]; then
                 echo "Signing DMG: $NEW_PATH"
-                # Get full signature output and save to file
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" > "$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature" 2>&1
-                echo "Saved signature to: $DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature"
-                echo "Signature content:"
-                cat "$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature"
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" \
+                pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH"
+                
+                # Rename the auto-generated .sig file
+                if [ -f "$NEW_PATH.sig" ]; then
+                  mv "$NEW_PATH.sig" "$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.sig"
+                  echo "✓ Signature file created: elastic-visark-macos-${ARCH}-${VERSION}.sig"
+                else
+                  echo "ERROR: .sig file not found after signing!" >&2
+                  exit 1
+                fi
               fi
             fi
           done
 
-          # Show final directory contents
           echo "Final DMG directory contents:"
           ls -la "$DMG_DIR"
-
-          # Clean up private key
           rm -f /tmp/private.key
-
-      - name: List files to upload
-        run: |
-          echo "Files to upload from DMG directory:"
-          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -102,7 +96,7 @@ jobs:
           name: macos-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.signature
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.sig  # CRITICAL: Upload .sig not .signature
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.pkg
           if-no-files-found: warn
 
@@ -159,9 +153,7 @@ jobs:
           NSIS_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/nsis"
           cd "$NSIS_DIR"
           for f in *.exe; do
-            if [ -f "$f" ]; then
-              mv "$f" "elastic-visark-windows-${ARCH}-${VERSION}-setup.exe"
-            fi
+            [ -f "$f" ] && mv "$f" "elastic-visark-windows-${ARCH}-${VERSION}-setup.exe"
           done
           cd -
 
@@ -169,16 +161,12 @@ jobs:
           MSI_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/msi"
           cd "$MSI_DIR"
           for f in *.msi; do
-            if [ -f "$f" ]; then
-              mv "$f" "elastic-visark-windows-${ARCH}-${VERSION}.msi"
-            fi
+            [ -f "$f" ] && mv "$f" "elastic-visark-windows-${ARCH}-${VERSION}.msi"
           done
           cd -
 
-          # Create signatures directory
+          # Copy .sig files to signatures directory
           mkdir -p signatures
-
-          # Copy signature files from tauri build
           find src-tauri/target -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
 
       - name: Upload artifacts
@@ -232,37 +220,16 @@ jobs:
         run: |
           VERSION=${{ github.ref_name }}
 
-          # DEB
-          cd src-tauri/target/release/bundle/deb
-          for f in *.deb; do
-            if [ -f "$f" ]; then
-              mv "$f" "elastic-visark-linux-x64-${VERSION}.deb"
-            fi
-          done
-          cd -
+          cd src-tauri/target/release/bundle/deb && \
+            for f in *.deb; do [ -f "$f" ] && mv "$f" "elastic-visark-linux-x64-${VERSION}.deb"; done && cd -
+          
+          cd src-tauri/target/release/bundle/rpm && \
+            for f in *.rpm; do [ -f "$f" ] && mv "$f" "elastic-visark-linux-x64-${VERSION}.rpm"; done && cd -
+          
+          cd src-tauri/target/release/bundle/appimage && \
+            for f in *.AppImage; do [ -f "$f" ] && mv "$f" "elastic-visark-linux-x64-${VERSION}.AppImage"; done && cd -
 
-          # RPM
-          cd src-tauri/target/release/bundle/rpm
-          for f in *.rpm; do
-            if [ -f "$f" ]; then
-              mv "$f" "elastic-visark-linux-x64-${VERSION}.rpm"
-            fi
-          done
-          cd -
-
-          # AppImage
-          cd src-tauri/target/release/bundle/appimage
-          for f in *.AppImage; do
-            if [ -f "$f" ]; then
-              mv "$f" "elastic-visark-linux-x64-${VERSION}.AppImage"
-            fi
-          done
-          cd -
-
-          # Create signatures directory
           mkdir -p signatures
-
-          # Copy signature files from tauri build
           find src-tauri/target -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
 
       - name: Upload artifacts
@@ -290,24 +257,19 @@ jobs:
           VERSION_NUM="${VERSION#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Debug: show artifact structure
-          echo "Artifacts structure:"
-          ls -R artifacts
-
-          # Function to read and encode signature from .signature file
-          # Reads the signature file and extracts base64 content, removing all comment lines
+          # Read pure base64 signature from .sig file (remove newlines)
           get_signature() {
             local SIG_FILE="$1"
             if [ -f "$SIG_FILE" ]; then
-              # Remove comment lines and newlines to get pure base64 signature
-              grep -v "comment:" "$SIG_FILE" | tr -d '\n'
+              cat "$SIG_FILE" | tr -d '\n'
             else
+              echo "WARNING: Signature file missing: $SIG_FILE" >&2
               echo ""
             fi
           }
 
           # macOS x64
-          MACOS_X64_SIG=$(get_signature "artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.signature")
+          MACOS_X64_SIG=$(get_signature "artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.sig")
           echo "macOS x64 signature length: ${#MACOS_X64_SIG}"
           cat > darwin-x86_64-update.json << EOF
           {
@@ -323,7 +285,7 @@ jobs:
           EOF
 
           # macOS aarch64
-          MACOS_AARCH64_SIG=$(get_signature "artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.signature")
+          MACOS_AARCH64_SIG=$(get_signature "artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.sig")
           echo "macOS aarch64 signature length: ${#MACOS_AARCH64_SIG}"
           cat > darwin-aarch64-update.json << EOF
           {
@@ -338,7 +300,7 @@ jobs:
           }
           EOF
 
-          # Windows x64 (no signature for now)
+          # Windows x64 (add signature if needed later)
           cat > win32-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
@@ -380,11 +342,10 @@ jobs:
           }
           EOF
 
-          echo "Created update JSON files:"
+          echo "✅ Created update JSON files:"
           ls -la *-update.json
-          echo ""
-          echo "Contents of darwin-x86_64-update.json:"
-          cat darwin-x86_64-update.json
+          echo -e "\n🔍 Sample signature content (first 100 chars):"
+          echo "${MACOS_X64_SIG}" | cut -c1-100
 
       - name: Create release
         uses: softprops/action-gh-release@v2
