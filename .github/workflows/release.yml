@@ -75,19 +75,16 @@ jobs:
               # Sign the DMG
               if [ -s /tmp/private.key ]; then
                 echo "Signing DMG: $NEW_PATH"
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" || echo "Signing failed"
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH"
+                echo "Signature file generated:"
+                ls -la "$NEW_PATH.sig" || echo "Signature file not found"
               fi
             fi
           done
 
-          # Create signatures directory
-          mkdir -p signatures
-
-          # Copy signature files if they exist
-          find "$DMG_DIR" -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
-
-          # Also check for .sig files from tauri build
-          find src-tauri/target -name "*.sig" -exec cp {} signatures/ \; 2>/dev/null || true
+          # Show final directory contents
+          echo "Final DMG directory contents:"
+          ls -la "$DMG_DIR"
 
           # Clean up private key
           rm -f /tmp/private.key
@@ -287,23 +284,31 @@ jobs:
 
           # Debug: show artifact structure
           echo "Artifacts structure:"
+          find artifacts -type f -name "*.sig" -o -name "*.dmg" | head -20
+          echo "---"
           ls -R artifacts
 
           # Function to read signature from .sig file
           get_signature() {
             local FILE_PATH="$1"
             local SIG_FILE="${FILE_PATH}.sig"
+            echo "Looking for signature file: $SIG_FILE"
             if [ -f "$SIG_FILE" ]; then
-              echo "Reading signature from: $SIG_FILE"
+              echo "Found signature file, content:"
               cat "$SIG_FILE"
             else
-              echo "Signature file not found: $SIG_FILE" >&2
-              echo ""
+              echo "Signature file not found!"
+              # Try to find any .sig file in the same directory
+              local DIR=$(dirname "$FILE_PATH")
+              echo "Looking for .sig files in $DIR:"
+              ls -la "$DIR"/*.sig 2>/dev/null || echo "No .sig files in directory"
             fi
           }
 
           # macOS x64
           MACOS_X64_DMG="artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.dmg"
+          echo "Looking for DMG: $MACOS_X64_DMG"
+          ls -la "$MACOS_X64_DMG" || echo "DMG not found"
           MACOS_X64_SIG=$(get_signature "$MACOS_X64_DMG")
           echo "macOS x64 signature: $MACOS_X64_SIG"
           cat > darwin-x86_64-update.json << EOF
