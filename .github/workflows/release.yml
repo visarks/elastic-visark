@@ -98,8 +98,8 @@ jobs:
           name: macos-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.pkg
-            signatures/*.sig
 
   build-windows:
     strategy:
@@ -279,39 +279,45 @@ jobs:
         with:
           path: artifacts
 
-      - name: Display structure of downloaded files
-        run: ls -R artifacts
-
-      - name: Install pnpm for signer
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
       - name: Create update JSON files with signatures
         run: |
           VERSION=${{ github.ref_name }}
           VERSION_NUM="${VERSION#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Write private key to temp file (no newline)
-          printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
+          # Debug: show artifact structure
+          echo "Artifacts structure:"
+          ls -R artifacts
 
-          # Debug: check if key file exists and has content
-          echo "Private key file size: $(wc -c < /tmp/private.key) bytes"
-          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set: $([ -n \"${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}\" ] && echo 'yes' || echo 'no')"
-
-          # Function to get signature for a file
+          # Function to read signature from .sig file
           get_signature() {
             local FILE_PATH="$1"
-            if [ -f "$FILE_PATH" ] && [ -s /tmp/private.key ]; then
-              # Sign the file and extract the public signature
-              echo "Signing: $FILE_PATH" >&2
-              TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$FILE_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1
+            local SIG_FILE="${FILE_PATH}.sig"
+            if [ -f "$SIG_FILE" ]; then
+              echo "Reading signature from: $SIG_FILE"
+              cat "$SIG_FILE"
             else
-              echo "File not found or key empty: $FILE_PATH" >&2
+              echo "Signature file not found: $SIG_FILE" >&2
               echo ""
             fi
           }
+
+          # macOS x64
+          MACOS_X64_DMG="artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.dmg"
+          MACOS_X64_SIG=$(get_signature "$MACOS_X64_DMG")
+          echo "macOS x64 signature: $MACOS_X64_SIG"
+          cat > darwin-x86_64-update.json << EOF
+          {
+            "version": "${VERSION_NUM}",
+            "date": "${DATE}",
+            "platforms": {
+              "darwin-x86_64": {
+                "signature": "${MACOS_X64_SIG}",
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-x64-${VERSION}.dmg"
+              }
+            }
+          }
+          EOF
 
           # macOS aarch64
           MACOS_AARCH64_DMG="artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.dmg"
@@ -324,22 +330,6 @@ jobs:
               "darwin-aarch64": {
                 "signature": "${MACOS_AARCH64_SIG}",
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-aarch64-${VERSION}.dmg"
-              }
-            }
-          }
-          EOF
-
-          # macOS x64
-          MACOS_X64_DMG="artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.dmg"
-          MACOS_X64_SIG=$(get_signature "$MACOS_X64_DMG")
-          cat > darwin-x86_64-update.json << EOF
-          {
-            "version": "${VERSION_NUM}",
-            "date": "${DATE}",
-            "platforms": {
-              "darwin-x86_64": {
-                "signature": "${MACOS_X64_SIG}",
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/elastic-visark-macos-x64-${VERSION}.dmg"
               }
             }
           }
@@ -398,9 +388,6 @@ jobs:
           echo ""
           echo "Contents of darwin-x86_64-update.json:"
           cat darwin-x86_64-update.json
-
-          # Clean up private key
-          rm -f /tmp/private.key
 
       - name: Create release
         uses: softprops/action-gh-release@v2
