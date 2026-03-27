@@ -75,13 +75,11 @@ jobs:
               # Sign the DMG and capture signature
               if [ -s /tmp/private.key ]; then
                 echo "Signing DMG: $NEW_PATH"
-                SIGNATURE=$(TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" 2>&1 | grep -A1 "Public signature:" | tail -1)
-                echo "Signature: $SIGNATURE"
-
-                # Save signature to file
-                SIG_FILE="$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature"
-                echo "$SIGNATURE" > "$SIG_FILE"
-                echo "Saved signature to: $SIG_FILE"
+                # Get full signature output and save to file
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" > "$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature" 2>&1
+                echo "Saved signature to: $DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature"
+                echo "Signature content:"
+                cat "$DMG_DIR/elastic-visark-macos-${ARCH}-${VERSION}.signature"
               fi
             fi
           done
@@ -296,11 +294,13 @@ jobs:
           echo "Artifacts structure:"
           ls -R artifacts
 
-          # Function to read signature from .signature file
+          # Function to read and encode signature from .signature file
+          # Reads the signature file and extracts base64 content, removing all comment lines
           get_signature() {
             local SIG_FILE="$1"
             if [ -f "$SIG_FILE" ]; then
-              cat "$SIG_FILE"
+              # Remove comment lines and newlines to get pure base64 signature
+              grep -v "comment:" "$SIG_FILE" | tr -d '\n'
             else
               echo ""
             fi
@@ -308,7 +308,7 @@ jobs:
 
           # macOS x64
           MACOS_X64_SIG=$(get_signature "artifacts/macos-x64/elastic-visark-macos-x64-${VERSION}.signature")
-          echo "macOS x64 signature: $MACOS_X64_SIG"
+          echo "macOS x64 signature length: ${#MACOS_X64_SIG}"
           cat > darwin-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
@@ -324,6 +324,7 @@ jobs:
 
           # macOS aarch64
           MACOS_AARCH64_SIG=$(get_signature "artifacts/macos-aarch64/elastic-visark-macos-aarch64-${VERSION}.signature")
+          echo "macOS aarch64 signature length: ${#MACOS_AARCH64_SIG}"
           cat > darwin-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
