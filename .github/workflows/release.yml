@@ -61,24 +61,24 @@ jobs:
           printf '%s' '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' > /tmp/private.key
 
           # DMG
-          DMG_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
-          echo "DMG directory contents:"
+          DMG_DIR="$(pwd)/src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          echo "DMG directory: $DMG_DIR"
           ls -la "$DMG_DIR" || echo "DMG directory not found"
 
-          cd "$DMG_DIR"
-          for f in *.dmg; do
+          for f in "$DMG_DIR"/*.dmg; do
             if [ -f "$f" ]; then
+              BASENAME=$(basename "$f")
               NEW_NAME="elastic-visark-macos-${ARCH}-${VERSION}.dmg"
-              echo "Renaming $f to $NEW_NAME"
-              mv "$f" "$NEW_NAME"
+              NEW_PATH="$DMG_DIR/$NEW_NAME"
+              echo "Renaming $BASENAME to $NEW_NAME"
+              mv "$f" "$NEW_PATH"
               # Sign the DMG
               if [ -s /tmp/private.key ]; then
-                echo "Signing DMG: $NEW_NAME"
-                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_NAME" || echo "Signing failed"
+                echo "Signing DMG: $NEW_PATH"
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" pnpm tauri signer sign --private-key-path /tmp/private.key "$NEW_PATH" || echo "Signing failed"
               fi
             fi
           done
-          cd -
 
           # Create signatures directory
           mkdir -p signatures
