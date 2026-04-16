@@ -49,7 +49,7 @@ jobs:
       - name: Build the app
         run: |
           echo "TAURI_SIGNING_PRIVATE_KEY length: ${#TAURI_SIGNING_PRIVATE_KEY}"
-          echo "TAURI_SIGNING_PRIVATE_KEY full: ${TAURI_SIGNING_PRIVATE_KEY}"
+          echo "TAURI_SIGNING_PRIVATE_KEY sha256: $(echo -n "$TAURI_SIGNING_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)"
           pnpm tauri build --target ${{ matrix.target }}
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -112,7 +112,7 @@ jobs:
       - name: Build the app
         run: |
           echo "TAURI_SIGNING_PRIVATE_KEY length: ${#TAURI_SIGNING_PRIVATE_KEY}"
-          echo "TAURI_SIGNING_PRIVATE_KEY full: ${TAURI_SIGNING_PRIVATE_KEY}"
+          echo "TAURI_SIGNING_PRIVATE_KEY sha256: $(echo -n "$TAURI_SIGNING_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)"
           pnpm tauri build --target ${{ matrix.target }}
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
