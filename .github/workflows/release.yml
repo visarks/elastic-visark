@@ -47,7 +47,10 @@ jobs:
         run: pnpm install
 
       - name: Build the app
-        run: pnpm tauri build --target ${{ matrix.target }} --no-sign
+        run: pnpm tauri build --target ${{ matrix.target }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
         run: |
@@ -104,7 +107,10 @@ jobs:
         run: pnpm install
 
       - name: Build the app
-        run: pnpm tauri build --target ${{ matrix.target }} --no-sign
+        run: pnpm tauri build --target ${{ matrix.target }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
         shell: bash
