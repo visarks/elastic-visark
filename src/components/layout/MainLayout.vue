@@ -89,14 +89,10 @@ const activeComponent = computed(() => {
 // 监听连接变化
 watch(
   () => connectionStore.currentConnectionId,
-  async (newId, oldId) => {
+  (newId, oldId) => {
     if (newId) {
-      // 新连接，尝试恢复标签或初始化
-      const restored = await tabInstanceStore.loadFromStorage(newId)
-      if (!restored) {
-        // 没有恢复的标签，初始化概览
-        tabInstanceStore.initFixedTabs(newId)
-      }
+      // 新连接，初始化标签
+      tabInstanceStore.initConnectionTabs(newId)
     } else if (oldId) {
       // 断开连接，重置标签
       tabInstanceStore.resetTabs()

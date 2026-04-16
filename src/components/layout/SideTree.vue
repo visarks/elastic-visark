@@ -580,7 +580,7 @@ watch(connectingId, () => {
 // 监听活跃连接变化，更新树图标
 watch(activeIds, () => {
   updateTreeOptions()
-}, { deep: true })
+})
 
 // 暴露方法
 defineExpose({

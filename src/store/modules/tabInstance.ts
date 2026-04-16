@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { type BoolQuery, createEmptyBoolQuery, type SortConfig, type AggregationConfig } from '@/views/search/types'
-import { getTabs, saveTabs } from '@/services/database'
 
 // 标签页类型
 export type TabType = 'search' | 'rest' | 'sql' | 'overview' | 'nodes' | 'indices' | 'templates' | 'shards' | 'cluster-settings'
@@ -117,40 +116,22 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
   const tabs = ref<TabInstance[]>([])
   const activeTabId = ref<string | null>(null)
   const currentConnectionId = ref<string | null>(null)
-  const saveTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
+
+  // 内存缓存：存储不同连接的 tab 状态
+  const connectionCache = new Map<string, { tabs: TabInstance[]; activeTabId: string | null }>()
 
   const activeTab = computed(() => {
     if (!activeTabId.value) return null
     return tabs.value.find(t => t.id === activeTabId.value) || null
   })
 
-  // 防抖保存到数据库
-  function scheduleSave() {
-    if (saveTimeout.value) {
-      clearTimeout(saveTimeout.value)
-    }
-    saveTimeout.value = setTimeout(() => {
-      saveToDatabase()
-    }, 500)
-  }
-
-  // 保存到数据库
-  async function saveToDatabase() {
-    if (!currentConnectionId.value) return
-
-    try {
-      const tabRecords = tabs.value.map((tab, index) => ({
-        id: tab.id,
-        connection_id: tab.connectionId,
-        tab_type: tab.type,
-        title: tab.title,
-        state: JSON.stringify(tab.state),
-        closable: tab.closable ? 1 : 0,
-        sort_order: index
-      }))
-      await saveTabs(currentConnectionId.value, tabRecords)
-    } catch (e) {
-      console.error('Failed to save tabs to database:', e)
+  // 保存当前连接状态到缓存
+  function saveCurrentToCache() {
+    if (currentConnectionId.value && tabs.value.length > 0) {
+      connectionCache.set(currentConnectionId.value, {
+        tabs: JSON.parse(JSON.stringify(tabs.value)),
+        activeTabId: activeTabId.value
+      })
     }
   }
 
@@ -197,7 +178,6 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
 
     tabs.value.push(tab)
     activeTabId.value = id
-    scheduleSave()
 
     return tab
   }
@@ -220,15 +200,12 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
         activeTabId.value = null
       }
     }
-
-    scheduleSave()
   }
 
   // 激活标签
   function activateTab(tabId: string) {
     if (tabs.value.find(t => t.id === tabId)) {
       activeTabId.value = tabId
-      scheduleSave()
     }
   }
 
@@ -236,8 +213,8 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
   function updateTabState(tabId: string, partialState: Partial<SearchTabState | RestTabState | SqlTabState>) {
     const tab = tabs.value.find(t => t.id === tabId)
     if (tab) {
-      tab.state = { ...tab.state, ...partialState } as SearchTabState | RestTabState | SqlTabState
-      scheduleSave()
+      // 使用 Object.assign 直接修改现有对象，保持响应式
+      Object.assign(tab.state, partialState)
     }
   }
 
@@ -252,12 +229,24 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
     const tab = tabs.value.find(t => t.id === tabId)
     if (tab) {
       tab.title = title
-      scheduleSave()
     }
   }
 
-  // 初始化固定标签
-  function initFixedTabs(connectionId: string) {
+  // 初始化固定标签（切换连接时使用内存缓存）
+  function initConnectionTabs(connectionId: string) {
+    // 先保存当前连接状态到缓存
+    saveCurrentToCache()
+
+    // 尝试从缓存恢复
+    const cache = connectionCache.get(connectionId)
+    if (cache) {
+      tabs.value = JSON.parse(JSON.stringify(cache.tabs))
+      activeTabId.value = cache.activeTabId
+      currentConnectionId.value = connectionId
+      return
+    }
+
+    // 没有缓存，初始化新连接
     tabs.value = []
     activeTabId.value = null
     currentConnectionId.value = connectionId
@@ -308,8 +297,6 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
     if (tabs.value.length > 0) {
       activeTabId.value = tabs.value[0].id
     }
-
-    scheduleSave()
   }
 
   // 清除所有可关闭的标签
@@ -318,38 +305,14 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
     if (activeTabId.value && !tabs.value.find(t => t.id === activeTabId.value)) {
       activeTabId.value = tabs.value.length > 0 ? tabs.value[0].id : null
     }
-    scheduleSave()
   }
 
-  // 重置所有标签
+  // 重置所有标签（断开所有连接时使用）
   function resetTabs() {
+    saveCurrentToCache()
     tabs.value = []
     activeTabId.value = null
     currentConnectionId.value = null
-  }
-
-  // 从数据库恢复
-  async function loadFromStorage(connectionId: string): Promise<boolean> {
-    try {
-      currentConnectionId.value = connectionId
-      const records = await getTabs(connectionId)
-
-      if (records && records.length > 0) {
-        tabs.value = records.map(record => ({
-          id: record.id,
-          type: record.tab_type as TabType,
-          title: record.title,
-          connectionId: record.connection_id,
-          closable: record.closable === 1,
-          state: JSON.parse(record.state)
-        }))
-        activeTabId.value = tabs.value.length > 0 ? tabs.value[0].id : null
-        return true
-      }
-    } catch (e) {
-      console.error('Failed to load tabs from database:', e)
-    }
-    return false
   }
 
   // 获取当前连接的所有标签
@@ -367,10 +330,9 @@ export const useTabInstanceStore = defineStore('tabInstance', () => {
     updateTabState,
     getTabState,
     updateTabTitle,
-    initFixedTabs,
+    initConnectionTabs,
     clearClosableTabs,
     resetTabs,
-    loadFromStorage,
     getConnectionTabs
   }
 })

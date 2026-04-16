@@ -56,8 +56,18 @@ pub async fn init_database(app: &tauri::AppHandle) -> Result<SqlitePool, String>
 }
 
 async fn run_migrations(pool: &SqlitePool) -> Result<(), String> {
-    let migration_sql = include_str!("../migrations/001_initial.sql");
+    let migrations = [
+        include_str!("../migrations/001_initial.sql"),
+        include_str!("../migrations/002_add_tab_is_active.sql"),
+    ];
 
+    for migration_sql in migrations {
+        // Ignore errors for ALTER TABLE statements (column may already exist)
+        let _ = pool.execute(migration_sql).await;
+    }
+
+    // Run initial migration (CREATE TABLE statements should always succeed)
+    let migration_sql = include_str!("../migrations/001_initial.sql");
     pool.execute(migration_sql)
         .await
         .map_err(|e| format!("Failed to run migrations: {}", e))?;

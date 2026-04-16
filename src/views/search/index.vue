@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   NSelect, NRadioGroup, NRadioButton, NInputNumber, NCheckbox, NCheckboxGroup,
   NButton, NIcon, NSpin, NEmpty, NInput, NTabs, NTabPane, NModal, useMessage
 } from 'naive-ui'
-import { Search, TrashOutline, AddOutline, RemoveOutline } from '@vicons/ionicons5'
+import { Search, TrashOutline, AddOutline, RemoveOutline, DownloadOutline } from '@vicons/ionicons5'
 import { useConnectionStore } from '@/store/modules/connection'
 import { useSettingsStore } from '@/store/modules/settings'
 import { useTabInstanceStore, type SearchTabState } from '@/store/modules/tabInstance'
 import { ElasticClient } from '@/api/elastic'
 import { getSearchHistory, saveSearchHistory } from '@/services/database'
-import { type MappingField, type SearchHistoryItem, type AggregationConfig, type AggregationType, createEmptyBoolQuery, buildDslFromQuery, createSearchQuery, createAggregationConfig } from './types'
+import { type MappingField, type SearchHistoryItem, type AggregationConfig, createEmptyBoolQuery, buildDslFromQuery, createSearchQuery, createAggregationConfig } from './types'
 import QueryBuilder from './components/QueryBuilder.vue'
+import AggItem from './components/AggItem.vue'
 import JsonPreviewModal from '@/components/JsonPreviewModal.vue'
 import JsonViewer from '@/components/JsonViewer.vue'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeFile } from '@tauri-apps/plugin-fs'
 
 const props = defineProps<{
   tabId: string
@@ -41,7 +44,23 @@ const xTable = ref<any>(null)
 // 获取当前标签状态
 const tabState = computed<SearchTabState>(() => {
   const state = tabInstanceStore.getTabState(props.tabId)
-  return state as SearchTabState
+  return (state || {
+    index: '',
+    simple: true,
+    timeout: 60,
+    trackTotalHits: true,
+    boolQuery: createEmptyBoolQuery(),
+    sortItems: [],
+    aggItems: [],
+    selectedFields: [],
+    fieldFilterKeyword: '',
+    result: null,
+    resultMode: 'table',
+    activeTab: 'query',
+    pageNum: 1,
+    pageSize: 20,
+    total: 0
+  }) as SearchTabState
 })
 
 // 状态更新函数
@@ -65,9 +84,23 @@ const form = computed({
   })
 })
 
+// 单独的 simple 切换
+const isSimpleMode = computed({
+  get: () => tabState.value.simple,
+  set: (val) => {
+    updateState({ simple: val, activeTab: val ? 'query' : 'aggregation' })
+  }
+})
+
+// 深拷贝 - 使用 JSON 方式（Vue 响应式对象需用此方式）
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 // 状态
 const loading = ref(false)
 const mappingLoading = ref(false)
+const mappingLoadedForIndex = ref<string>('')  // 记录已加载 mapping 的 index
 
 // 分页（从 tabState 读取）
 const page = computed({
@@ -180,26 +213,6 @@ const fieldOptions = computed(() => {
   return mapping.value.map(f => ({ label: f.name, value: f.name }))
 })
 
-// 聚合类型选项
-const aggTypeOptions = [
-  { label: 'terms', value: 'terms' },
-  { label: 'max', value: 'max' },
-  { label: 'min', value: 'min' },
-  { label: 'sum', value: 'sum' },
-  { label: 'count', value: 'count' },
-  { label: 'avg', value: 'avg' },
-  { label: 'cardinality', value: 'cardinality' },
-  { label: 'date_histogram', value: 'date_histogram' }
-]
-
-// 聚合排序选项
-const aggOrderOptions = [
-  { label: 'key 升序', value: '_key-asc' },
-  { label: 'key 降序', value: '_key-desc' },
-  { label: 'count 升序', value: '_count-asc' },
-  { label: 'count 降序', value: '_count-desc' }
-]
-
 // 聚合（从 tabState 读取）
 const aggItems = computed({
   get: () => tabState.value.aggItems,
@@ -260,10 +273,16 @@ function generateColumnsFromMapping() {
 }
 
 // 加载字段
-async function loadFields(index: string) {
+async function loadFields(index: string, silent: boolean = false) {
   if (!index) {
     mapping.value = []
     columns.value = []
+    mappingLoadedForIndex.value = ''
+    return
+  }
+
+  // 如果已经加载过相同的 index，跳过
+  if (mappingLoadedForIndex.value === index && mapping.value.length > 0) {
     return
   }
 
@@ -286,13 +305,17 @@ async function loadFields(index: string) {
 
     const properties = indexMapping?.properties || indexMapping || {}
     mapping.value = parseMapping(properties)
+    mappingLoadedForIndex.value = index
     // 生成表格列
     generateColumnsFromMapping()
   } catch (error) {
     console.error('Failed to load mapping:', error)
-    message.error('加载 Mapping 失败')
+    if (!silent) {
+      message.error('加载 Mapping 失败')
+    }
     mapping.value = []
     columns.value = []
+    mappingLoadedForIndex.value = ''
   } finally {
     mappingLoading.value = false
   }
@@ -327,7 +350,7 @@ function buildQueryDsl(): any {
     track_total_hits: form.value.trackTotalHits
   }
 
-  if (form.value.simple) {
+  if (isSimpleMode.value) {
     // 简单查询：添加 _source、排序、分页
     if (selectedFields.value.size > 0) {
       query._source = { includes: Array.from(selectedFields.value) }
@@ -447,7 +470,7 @@ async function search() {
     const res = await client.search(form.value.index, query)
     updateState({ result: res })
 
-    if (form.value.simple) {
+    if (isSimpleMode.value) {
       // 正确处理 total 值（ES 返回格式可能是 { value: 0, relation: "eq" } 或直接数字）
       const totalValue = res.hits?.total
       const total = typeof totalValue === 'object' ? (totalValue?.value || 0) : (totalValue || 0)
@@ -525,10 +548,12 @@ function handleIndexChange(val: string | null) {
   rows.value = []
   // 如果选择了索引，加载字段生成表头
   if (val) {
+    mappingLoadedForIndex.value = ''  // 重置，允许重新加载
     loadFields(val)
   } else {
     mapping.value = []
     columns.value = []
+    mappingLoadedForIndex.value = ''
   }
 }
 
@@ -541,7 +566,7 @@ function addSortItem() {
 
 // 添加查询项
 function addQueryItem() {
-  const newQuery = JSON.parse(JSON.stringify(boolQuery.value))
+  const newQuery = deepClone(boolQuery.value)
   newQuery.query.push(createSearchQuery())
   updateState({ boolQuery: newQuery })
 }
@@ -565,48 +590,6 @@ function removeAggItem(index: number) {
   const newItems = [...aggItems.value]
   newItems.splice(index, 1)
   updateState({ aggItems: newItems })
-}
-
-// 更新聚合排序
-function updateAggOrder(agg: AggregationConfig, value: string) {
-  const [key, order] = value.split('-')
-  if (key === '_key') {
-    agg.order = { _key: order as 'asc' | 'desc' }
-  } else {
-    agg.order = { _count: order as 'asc' | 'desc' }
-  }
-  // 触发状态更新
-  updateState({ aggItems: [...aggItems.value] })
-}
-
-// 获取聚合排序值
-function getAggOrderValue(agg: AggregationConfig): string {
-  if (!agg.order) return '_key-asc'
-  const key = Object.keys(agg.order)[0] as '_key' | '_count'
-  const order = (agg.order as Record<string, 'asc' | 'desc'>)[key]
-  return `${key}-${order}`
-}
-
-// 支持子聚合的类型
-const subAggSupportedTypes = ['terms', 'date_histogram']
-
-// 添加子聚合
-function addSubAgg(parent: AggregationConfig, type: AggregationType = 'terms') {
-  if (!parent.subAggs) {
-    parent.subAggs = []
-  }
-  parent.subAggs.push(createAggregationConfig(type))
-  // 触发状态更新
-  updateState({ aggItems: [...aggItems.value] })
-}
-
-// 删除子聚合
-function removeSubAgg(parent: AggregationConfig, index: number) {
-  if (parent.subAggs) {
-    parent.subAggs.splice(index, 1)
-    // 触发状态更新
-    updateState({ aggItems: [...aggItems.value] })
-  }
 }
 
 // 查询历史
@@ -789,12 +772,33 @@ function handlePageSizeChange(newPageSize: number) {
   search()
 }
 
-// 监听连接变化，加载字段
-watch(() => connectionStore.currentConnectionId, (connId) => {
-  if (connId && form.value.index) {
-    loadFields(form.value.index)
+// 监听连接变化，清空状态
+watch(() => connectionStore.currentConnectionId, (_connId, oldConnId) => {
+  if (oldConnId) {
+    // 切换集群时，清空之前的状态
+    updateState({
+      result: null,
+      total: 0
+    })
+    rows.value = []
+    mapping.value = []
+    columns.value = []
+    mappingLoadedForIndex.value = ''
   }
 })
+
+// 监听索引列表变化，自动加载 mapping（用于恢复 tab 状态）
+// 使用带条件的 watchEffect 更高效，避免不必要的依赖追踪
+watchEffect(() => {
+  const options = indexOptions.value
+  const selectedIndex = tabState.value.index
+  if (options.length > 0 && selectedIndex && mappingLoadedForIndex.value !== selectedIndex) {
+    const indexExists = options.some(opt => opt.value === selectedIndex)
+    if (indexExists) {
+      loadFields(selectedIndex, true)
+    }
+  }
+}, { flush: 'post' })
 
 // 分页组件高度
 const paginationHeight = 52
@@ -818,15 +822,6 @@ const tableMaxHeight = computed(() => {
 // 监听结果变化，更新高度
 watch(result, () => {
   updateJsonViewerHeight()
-})
-
-// 监听查询模式变化，自动切换对应 tab
-watch(() => form.value.simple, (isSimple) => {
-  if (isSimple) {
-    updateState({ activeTab: 'query' })
-  } else {
-    updateState({ activeTab: 'aggregation' })
-  }
 })
 
 // 监听窗口大小变化
@@ -859,6 +854,87 @@ function stopResize() {
   document.removeEventListener('mouseup', stopResize)
 }
 
+// 下载 CSV
+async function downloadCsv() {
+  if (rows.value.length === 0) {
+    message.warning('没有数据可下载')
+    return
+  }
+
+  // 弹出保存对话框
+  const filePath = await save({
+    filters: [{ name: 'CSV', extensions: ['csv'] }],
+    defaultPath: `${form.value.index || 'search'}_${Date.now()}.csv`
+  })
+
+  if (!filePath) {
+    return // 用户取消
+  }
+
+  // 获取所有列名（排除内部字段）
+  const headers = columns.value.map(c => c.field)
+  const csvRows: string[] = []
+
+  // 添加表头
+  csvRows.push(headers.join(','))
+
+  // 添加数据行
+  for (const row of rows.value) {
+    const values = headers.map(h => {
+      const val = row[h]
+      if (val === null || val === undefined) return ''
+      // 处理包含逗号或引号的值
+      const str = String(val)
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    })
+    csvRows.push(values.join(','))
+  }
+
+  // 创建 CSV 内容（带 UTF-8 BOM）
+  const csvContent = '\ufeff' + csvRows.join('\n')
+  const encoder = new TextEncoder()
+  const data = encoder.encode(csvContent)
+
+  try {
+    await writeFile(filePath, data)
+    message.success('CSV 下载成功')
+  } catch (error: any) {
+    message.error(`下载失败: ${error.message}`)
+  }
+}
+
+// 下载 JSON
+async function downloadJson() {
+  if (!result.value) {
+    message.warning('没有数据可下载')
+    return
+  }
+
+  // 弹出保存对话框
+  const filePath = await save({
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    defaultPath: `${form.value.index || 'search'}_${Date.now()}.json`
+  })
+
+  if (!filePath) {
+    return // 用户取消
+  }
+
+  const jsonContent = JSON.stringify(result.value, null, 2)
+  const encoder = new TextEncoder()
+  const data = encoder.encode(jsonContent)
+
+  try {
+    await writeFile(filePath, data)
+    message.success('JSON 下载成功')
+  } catch (error: any) {
+    message.error(`下载失败: ${error.message}`)
+  }
+}
+
 onMounted(() => {
   loadSearchHistory()
   window.addEventListener('resize', handleResize)
@@ -889,7 +965,7 @@ onUnmounted(() => {
             style="width: 220px"
             @update:value="handleIndexChange"
           />
-          <n-radio-group v-model:value="form.simple" size="small">
+          <n-radio-group v-model:value="isSimpleMode" size="small">
             <n-radio-button :value="true">简单</n-radio-button>
             <n-radio-button :value="false">聚合</n-radio-button>
           </n-radio-group>
@@ -899,7 +975,7 @@ onUnmounted(() => {
           <n-button
             type="primary"
             size="small"
-            :disabled="!form.index || (!form.simple && aggItems.length === 0)"
+            :disabled="!form.index || (!isSimpleMode && aggItems.length === 0)"
             :loading="loading"
             @click="search"
           >
@@ -923,7 +999,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Tab 区域 -->
-      <n-tabs v-model:value="activeTab" type="line" size="small" class="config-tabs">
+      <n-tabs v-model:value="activeTab" type="line" size="small" class="config-tabs" :key="isSimpleMode ? 'simple' : 'agg'">
         <!-- 查询条件 -->
         <n-tab-pane name="query" tab="查询条件">
           <div class="tab-header">
@@ -942,7 +1018,7 @@ onUnmounted(() => {
         </n-tab-pane>
 
         <!-- 排序 -->
-        <n-tab-pane v-if="form.simple" name="sort" tab="排序">
+        <n-tab-pane v-if="isSimpleMode" name="sort" tab="排序">
           <div class="tab-header">
             <n-button size="tiny" type="primary" @click="addSortItem">
               <template #icon>
@@ -975,7 +1051,7 @@ onUnmounted(() => {
         </n-tab-pane>
 
         <!-- 字段选择 -->
-        <n-tab-pane v-if="form.simple" name="fields" tab="字段选择">
+        <n-tab-pane v-if="isSimpleMode" name="fields" tab="字段选择">
           <template #tab>
             字段选择
             <span v-if="selectedFields.size > 0" class="selected-count">({{ selectedFields.size }}/{{ mapping.length }})</span>
@@ -1012,7 +1088,7 @@ onUnmounted(() => {
         </n-tab-pane>
 
         <!-- 聚合 -->
-        <n-tab-pane v-if="!form.simple" name="aggregation" tab="聚合">
+        <n-tab-pane v-if="!isSimpleMode" name="aggregation" tab="聚合">
           <div class="tab-header">
             <n-button size="tiny" type="primary" @click="addAggItem">
               <template #icon>
@@ -1021,122 +1097,18 @@ onUnmounted(() => {
             </n-button>
           </div>
           <div class="agg-list">
-            <div v-for="(item, index) in aggItems" :key="item.id" class="agg-item-wrapper">
-              <div class="agg-item">
-                <n-checkbox v-model:checked="item.enabled" />
-                <n-select
-                  v-model:value="item.type"
-                  :options="aggTypeOptions"
-                  size="small"
-                  style="width: 100px"
-                />
-                <n-select
-                  v-model:value="item.field"
-                  :options="fieldOptions"
-                  size="small"
-                  filterable
-                  clearable
-                  placeholder="字段"
-                  style="flex: 1; min-width: 100px"
-                />
-                <template v-if="item.type === 'terms'">
-                  <n-input-number
-                    v-model:value="item.size"
-                    placeholder="size"
-                    size="small"
-                    style="width: 80px"
-                    :min="1"
-                  />
-                  <n-select
-                    :value="getAggOrderValue(item)"
-                    :options="aggOrderOptions"
-                    size="small"
-                    style="width: 110px"
-                    @update:value="(v: string) => updateAggOrder(item, v)"
-                  />
-                </template>
-                <template v-else-if="item.type === 'date_histogram'">
-                  <n-input
-                    v-model:value="item.interval"
-                    placeholder="间隔"
-                    size="small"
-                    style="width: 100px"
-                  />
-                  <n-input
-                    v-model:value="item.format"
-                    placeholder="格式"
-                    size="small"
-                    style="width: 100px"
-                  />
-                </template>
-                <n-button v-if="subAggSupportedTypes.includes(item.type)" size="tiny" type="info" @click="addSubAgg(item)">
-                  <template #icon>
-                    <n-icon :component="AddOutline" />
-                  </template>
-                </n-button>
-                <n-button size="tiny" type="error" @click="removeAggItem(index)">
-                  <template #icon>
-                    <n-icon :component="RemoveOutline" />
-                  </template>
-                </n-button>
-              </div>
-              <!-- 子聚合列表 -->
-              <div v-if="item.subAggs && item.subAggs.length > 0" class="sub-agg-list">
-                <div v-for="(subAgg, subIndex) in item.subAggs" :key="subAgg.id" class="agg-item sub-agg-item">
-                  <n-checkbox v-model:checked="subAgg.enabled" />
-                  <n-select
-                    v-model:value="subAgg.type"
-                    :options="aggTypeOptions"
-                    size="small"
-                    style="width: 100px"
-                  />
-                  <n-select
-                    v-model:value="subAgg.field"
-                    :options="fieldOptions"
-                    size="small"
-                    filterable
-                    clearable
-                    placeholder="字段"
-                    style="flex: 1; min-width: 100px"
-                  />
-                  <template v-if="subAgg.type === 'terms'">
-                    <n-input-number
-                      v-model:value="subAgg.size"
-                      placeholder="size"
-                      size="small"
-                      style="width: 80px"
-                      :min="1"
-                    />
-                    <n-select
-                      :value="getAggOrderValue(subAgg)"
-                      :options="aggOrderOptions"
-                      size="small"
-                      style="width: 110px"
-                      @update:value="(v: string) => updateAggOrder(subAgg, v)"
-                    />
-                  </template>
-                  <template v-else-if="subAgg.type === 'date_histogram'">
-                    <n-input
-                      v-model:value="subAgg.interval"
-                      placeholder="间隔"
-                      size="small"
-                      style="width: 100px"
-                    />
-                    <n-input
-                      v-model:value="subAgg.format"
-                      placeholder="格式"
-                      size="small"
-                      style="width: 100px"
-                    />
-                  </template>
-                  <n-button size="tiny" type="error" @click="removeSubAgg(item, subIndex)">
-                    <template #icon>
-                      <n-icon :component="RemoveOutline" />
-                    </template>
-                  </n-button>
-                </div>
-              </div>
-            </div>
+            <AggItem
+              v-for="(item, index) in aggItems"
+              :key="item.id"
+              :agg="item"
+              :field-options="fieldOptions"
+              @update="(updated) => {
+                const newItems = [...aggItems]
+                newItems[index] = updated
+                updateState({ aggItems: newItems })
+              }"
+              @remove="() => removeAggItem(index)"
+            />
             <div v-if="aggItems.length === 0" class="empty-hint">点击上方按钮添加聚合</div>
           </div>
         </n-tab-pane>
@@ -1155,14 +1127,30 @@ onUnmounted(() => {
       <!-- 工具栏 -->
       <div class="result-toolbar">
         <div class="result-tabs">
-          <div v-if="form.simple" class="tab-item" :class="{ active: resultMode === 'table' }" @click="resultMode = 'table'">表格</div>
+          <div v-if="isSimpleMode" class="tab-item" :class="{ active: resultMode === 'table' }" @click="resultMode = 'table'">表格</div>
           <div class="tab-item" :class="{ active: resultMode === 'json' }" @click="resultMode = 'json'">JSON</div>
+        </div>
+        <div class="result-actions">
+          <n-icon
+            v-if="isSimpleMode && resultMode === 'table' && rows.length > 0"
+            :component="DownloadOutline"
+            class="download-icon"
+            title="下载 CSV"
+            @click="downloadCsv"
+          />
+          <n-icon
+            v-if="resultMode === 'json' && result"
+            :component="DownloadOutline"
+            class="download-icon"
+            title="下载 JSON"
+            @click="downloadJson"
+          />
         </div>
       </div>
 
       <div class="result-content">
         <!-- 表格视图 -->
-        <div v-if="form.simple" v-show="resultMode === 'table'" class="table-container">
+        <div v-if="isSimpleMode" v-show="resultMode === 'table'" class="table-container">
           <n-spin :show="mappingLoading || loading">
             <div v-show="columns.length > 0" class="table-wrapper">
               <vxe-table
@@ -1487,6 +1475,15 @@ onUnmounted(() => {
   background-color: rgba(99, 226, 183, 0.05);
 }
 
+.sub-agg-item > .sub-agg-list {
+  margin-left: 24px;
+  padding-left: 12px;
+  border-left: 2px solid #3d3d3d;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .operation-modal-content {
   display: flex;
   flex-direction: column;
@@ -1574,7 +1571,14 @@ onUnmounted(() => {
 
 .result-tabs {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tab-item {
@@ -1592,6 +1596,17 @@ onUnmounted(() => {
   &.active {
     color: #63e2b7;
     background-color: #1a1a1a;
+  }
+}
+
+.download-icon {
+  font-size: 16px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #63e2b7;
   }
 }
 

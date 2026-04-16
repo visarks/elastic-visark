@@ -332,6 +332,8 @@ pub struct TabRecord {
     pub state: String,
     pub closable: i32,
     pub sort_order: i32,
+    #[serde(default)]
+    pub is_active: i32,
 }
 
 /// Get tabs for a connection
@@ -341,7 +343,7 @@ async fn get_tabs(app: tauri::AppHandle, connection_id: String) -> Result<Vec<Ta
     let pool = pool.inner();
 
     let rows = sqlx::query_as::<_, TabRecord>(
-        "SELECT id, connection_id, tab_type, title, state, closable, sort_order FROM tab_instances WHERE connection_id = ? ORDER BY sort_order"
+        "SELECT id, connection_id, tab_type, title, state, closable, sort_order, COALESCE(is_active, 0) as is_active FROM tab_instances WHERE connection_id = ? ORDER BY sort_order"
     )
     .bind(&connection_id)
     .fetch_all(pool)
@@ -367,7 +369,7 @@ async fn save_tabs(app: tauri::AppHandle, connection_id: String, tabs: Vec<TabRe
     // Insert new
     for tab in tabs {
         sqlx::query(
-            "INSERT INTO tab_instances (id, connection_id, tab_type, title, state, closable, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO tab_instances (id, connection_id, tab_type, title, state, closable, sort_order, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         )
         .bind(&tab.id)
         .bind(&tab.connection_id)
@@ -376,6 +378,7 @@ async fn save_tabs(app: tauri::AppHandle, connection_id: String, tabs: Vec<TabRe
         .bind(&tab.state)
         .bind(tab.closable)
         .bind(tab.sort_order)
+        .bind(tab.is_active)
         .bind(chrono::Utc::now().timestamp_millis())
         .bind(chrono::Utc::now().timestamp_millis())
         .execute(pool)

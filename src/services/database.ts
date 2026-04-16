@@ -43,6 +43,7 @@ export interface TabRecord {
   state: string
   closable: number
   sort_order: number
+  is_active?: number
 }
 
 export interface SearchHistoryRecord {

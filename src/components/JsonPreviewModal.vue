@@ -53,7 +53,7 @@ function initEditor() {
     lineNumbers: 'on',
     scrollBeyondLastLine: false,
     wordWrap: 'on',
-    automaticLayout: true,
+    automaticLayout: false,
     folding: true,
     foldingStrategy: 'indentation',
     renderWhitespace: 'none',
@@ -63,8 +63,11 @@ function initEditor() {
     }
   })
 
-  // 聚焦编辑器以启用快捷键
-  editorInstance.focus()
+  // 延迟聚焦和布局，确保 modal 已完全打开
+  setTimeout(() => {
+    editorInstance?.focus()
+    editorInstance?.layout()
+  }, 50)
 }
 
 // 销毁编辑器

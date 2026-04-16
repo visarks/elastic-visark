@@ -48,66 +48,76 @@ const fieldOptions = computed(() =>
   props.mapping.map(f => ({ label: f.name, value: f.name }))
 )
 
+// 深拷贝 - 使用 JSON 方式（Vue 响应式对象需用此方式）
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 // 更新项
 function updateItem(item: SearchItemType) {
-  emit('update', JSON.parse(JSON.stringify(item)))
+  emit('update', deepClone(item))
 }
 
 // 切换启用状态
 function toggleEnabled() {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.enabled = !newItem.enabled
   updateItem(newItem)
 }
 
 // 更新字段
 function updateField(field: string) {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.field = field
   updateItem(newItem)
 }
 
 // 更新查询类型
 function updateQueryType(type: QueryType) {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.queryType = type
   // 重置值
   newItem.value = ''
   newItem.value1 = ''
+  // range 类型设置默认操作符
+  if (type === 'range') {
+    newItem.rangeLowerOp = 'gte'
+    newItem.rangeUpperOp = 'lte'
+  }
   updateItem(newItem)
 }
 
 // 更新值
 function updateValue(val: string) {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.value = val
   updateItem(newItem)
 }
 
 // 更新上界值
 function updateValue1(val: string) {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.value1 = val
   updateItem(newItem)
 }
 
 // 更新 range 下界操作符
 function updateRangeLowerOp(op: 'gt' | 'gte') {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.rangeLowerOp = op
   updateItem(newItem)
 }
 
 // 更新 range 上界操作符
 function updateRangeUpperOp(op: 'lt' | 'lte') {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   newItem.rangeUpperOp = op
   updateItem(newItem)
 }
 
 // 添加嵌套 SearchQuery
 function addNestedQuery(type: BoolContext = 'must') {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
+  const newItem = deepClone(props.searchItem)
   if (!newItem.children) {
     newItem.children = []
   }
@@ -117,19 +127,23 @@ function addNestedQuery(type: BoolContext = 'must') {
 
 // 更新嵌套 SearchQuery
 function updateNestedQuery(id: string, query: SearchQuery) {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
-  const idx = newItem.children.findIndex((q: SearchQuery) => q.id === id)
-  if (idx > -1) {
-    newItem.children[idx] = query
-    updateItem(newItem)
+  const newItem = deepClone(props.searchItem)
+  if (newItem.children) {
+    const idx = newItem.children.findIndex((q: SearchQuery) => q.id === id)
+    if (idx > -1) {
+      newItem.children[idx] = query
+      updateItem(newItem)
+    }
   }
 }
 
 // 删除嵌套 SearchQuery
 function removeNestedQuery(id: string) {
-  const newItem = JSON.parse(JSON.stringify(props.searchItem))
-  newItem.children = newItem.children.filter((q: SearchQuery) => q.id !== id)
-  updateItem(newItem)
+  const newItem = deepClone(props.searchItem)
+  if (newItem.children) {
+    newItem.children = newItem.children.filter((q: SearchQuery) => q.id !== id)
+    updateItem(newItem)
+  }
 }
 </script>
 

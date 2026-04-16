@@ -52,6 +52,8 @@ export function createSearchItem(type: SearchType = 'query'): SearchItem {
     item.queryType = 'term'
     item.field = ''
     item.value = ''
+    item.rangeLowerOp = 'gte'
+    item.rangeUpperOp = 'lte'
   } else {
     item.children = []
   }
@@ -126,11 +128,14 @@ function buildQueryClause(item: SearchItem): any | null {
       return { match: { [item.field]: item.value } }
     case 'range':
       const range: any = {}
-      if (item.rangeLowerOp && item.value) {
-        range[item.rangeLowerOp] = item.value
+      // 使用默认操作符
+      const lowerOp = item.rangeLowerOp || 'gte'
+      const upperOp = item.rangeUpperOp || 'lte'
+      if (item.value) {
+        range[lowerOp] = item.value
       }
-      if (item.rangeUpperOp && item.value1) {
-        range[item.rangeUpperOp] = item.value1
+      if (item.value1) {
+        range[upperOp] = item.value1
       }
       if (Object.keys(range).length === 0) return null
       return { range: { [item.field]: range } }

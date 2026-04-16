@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS tab_instances (
     state TEXT NOT NULL,
     closable INTEGER NOT NULL DEFAULT 1,
     sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 0,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
 );

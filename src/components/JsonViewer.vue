@@ -37,7 +37,7 @@ function initEditor() {
     lineNumbers: 'on',
     scrollBeyondLastLine: false,
     wordWrap: 'on',
-    automaticLayout: true,
+    automaticLayout: false,
     folding: true,
     foldingStrategy: 'indentation',
     renderWhitespace: 'none',
@@ -55,6 +55,13 @@ function updateContent() {
       ? (typeof props.content === 'string' ? props.content : JSON.stringify(props.content, null, 2))
       : '{}'
     editorInstance.setValue(jsonStr)
+  }
+}
+
+// 手动调整布局
+function layoutEditor() {
+  if (editorInstance) {
+    editorInstance.layout()
   }
 }
 
@@ -84,6 +91,13 @@ function handleThemeChange() {
     monaco.editor.setTheme(getEditorTheme())
   }
 }
+
+// 监听高度变化
+watch(() => props.height, () => {
+  nextTick(() => {
+    layoutEditor()
+  })
+})
 
 onMounted(() => {
   nextTick(() => {

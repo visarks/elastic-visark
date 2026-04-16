@@ -39,42 +39,47 @@ const contextColors: Record<BoolContext, string> = {
   filter: '#f59e0b'
 }
 
+// 深拷贝 - 使用 JSON 方式（Vue 响应式对象需用此方式）
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 // 更新查询
 function updateQuery(query: SearchQueryType) {
-  emit('update', JSON.parse(JSON.stringify(query)))
+  emit('update', deepClone(query))
 }
 
 // 切换启用状态
 function toggleEnabled() {
-  const newQuery = JSON.parse(JSON.stringify(props.searchQuery))
+  const newQuery = deepClone(props.searchQuery)
   newQuery.enabled = !newQuery.enabled
   updateQuery(newQuery)
 }
 
 // 改变上下文类型
 function changeContext(val: BoolContext) {
-  const newQuery = JSON.parse(JSON.stringify(props.searchQuery))
+  const newQuery = deepClone(props.searchQuery)
   newQuery.type = val
   updateQuery(newQuery)
 }
 
 // 添加查询项
 function addSearchItem(type: 'query' | 'bool' = 'query') {
-  const newQuery = JSON.parse(JSON.stringify(props.searchQuery))
+  const newQuery = deepClone(props.searchQuery)
   newQuery.children.push(createSearchItem(type))
   updateQuery(newQuery)
 }
 
 // 删除查询项
 function removeSearchItem(id: string) {
-  const newQuery = JSON.parse(JSON.stringify(props.searchQuery))
+  const newQuery = deepClone(props.searchQuery)
   newQuery.children = newQuery.children.filter((item: SearchItem) => item.id !== id)
   updateQuery(newQuery)
 }
 
 // 更新查询项
 function updateSearchItem(id: string, updated: SearchItem) {
-  const newQuery = JSON.parse(JSON.stringify(props.searchQuery))
+  const newQuery = deepClone(props.searchQuery)
   const idx = newQuery.children.findIndex((item: SearchItem) => item.id === id)
   if (idx > -1) {
     newQuery.children[idx] = updated
