@@ -213,15 +213,27 @@ jobs:
             fi
           }
 
+          # Function to get signature content
+          get_signature() {
+            local SIG=$(find "$1" -name "$2.sig" 2>/dev/null | head -1)
+            if [ -n "$SIG" ]; then
+              cat "$SIG"
+            else
+              echo ""
+            fi
+          }
+
           # macOS x64
           MACOS_X64_URL=$(get_filename "artifacts/macos-x64" "*.tar.gz")
+          MACOS_X64_SIG=$(get_signature "artifacts/macos-x64" "*.tar.gz")
           cat > darwin-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "darwin-x86_64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${MACOS_X64_URL}"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${MACOS_X64_URL}",
+                "signature": "${MACOS_X64_SIG}"
               }
             }
           }
@@ -229,13 +241,15 @@ jobs:
 
           # macOS aarch64
           MACOS_AARCH64_URL=$(get_filename "artifacts/macos-aarch64" "*.tar.gz")
+          MACOS_AARCH64_SIG=$(get_signature "artifacts/macos-aarch64" "*.tar.gz")
           cat > darwin-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "darwin-aarch64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${MACOS_AARCH64_URL}"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${MACOS_AARCH64_URL}",
+                "signature": "${MACOS_AARCH64_SIG}"
               }
             }
           }
@@ -243,13 +257,15 @@ jobs:
 
           # Windows x64
           WINDOWS_X64_URL=$(get_filename "artifacts/windows-x64" "*.exe")
+          WINDOWS_X64_SIG=$(get_signature "artifacts/windows-x64" "*.exe")
           cat > win32-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "win32-x86_64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${WINDOWS_X64_URL}"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${WINDOWS_X64_URL}",
+                "signature": "${WINDOWS_X64_SIG}"
               }
             }
           }
@@ -257,13 +273,15 @@ jobs:
 
           # Windows aarch64
           WINDOWS_AARCH64_URL=$(get_filename "artifacts/windows-aarch64" "*.exe")
+          WINDOWS_AARCH64_SIG=$(get_signature "artifacts/windows-aarch64" "*.exe")
           cat > win32-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "win32-aarch64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${WINDOWS_AARCH64_URL}"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${WINDOWS_AARCH64_URL}",
+                "signature": "${WINDOWS_AARCH64_SIG}"
               }
             }
           }
@@ -271,13 +289,15 @@ jobs:
 
           # Linux x64
           LINUX_X64_URL=$(get_filename "artifacts/linux-x64" "*.AppImage")
+          LINUX_X64_SIG=$(get_signature "artifacts/linux-x64" "*.AppImage")
           cat > linux-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
               "linux-x86_64": {
-                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${LINUX_X64_URL}"
+                "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${LINUX_X64_URL}",
+                "signature": "${LINUX_X64_SIG}"
               }
             }
           }
@@ -293,21 +313,25 @@ jobs:
           for arch in x64 aarch64; do
             find artifacts/macos-${arch} -name "*.tar.gz" -exec mv {} . \; 2>/dev/null || true
             find artifacts/macos-${arch} -name "*.dmg" -exec mv {} . \; 2>/dev/null || true
+            find artifacts/macos-${arch} -name "*.tar.gz.sig" -exec mv {} . \; 2>/dev/null || true
           done
 
           # Windows
           for arch in x64 aarch64; do
             find artifacts/windows-${arch} -name "*.exe" -exec mv {} . \; 2>/dev/null || true
             find artifacts/windows-${arch} -name "*.msi" -exec mv {} . \; 2>/dev/null || true
+            find artifacts/windows-${arch} -name "*.exe.sig" -exec mv {} . \; 2>/dev/null || true
+            find artifacts/windows-${arch} -name "*.msi.sig" -exec mv {} . \; 2>/dev/null || true
           done
 
           # Linux
           find artifacts/linux-x64 -name "*.AppImage" -exec mv {} . \; 2>/dev/null || true
           find artifacts/linux-x64 -name "*.deb" -exec mv {} . \; 2>/dev/null || true
           find artifacts/linux-x64 -name "*.rpm" -exec mv {} . \; 2>/dev/null || true
+          find artifacts/linux-x64 -name "*.AppImage.sig" -exec mv {} . \; 2>/dev/null || true
 
           echo "Files for release:"
-          ls -la *.tar.gz *.dmg *.exe *.msi *.AppImage *.deb *.rpm *-update.json 2>/dev/null || true
+          ls -la *.tar.gz *.dmg *.exe *.msi *.AppImage *.deb *.rpm *.sig *-update.json 2>/dev/null || true
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -320,6 +344,7 @@ jobs:
             *.AppImage
             *.deb
             *.rpm
+            *.sig
             *-update.json
           draft: true
           generate_release_notes: true
