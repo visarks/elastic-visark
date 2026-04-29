@@ -1,162 +1,162 @@
-# Elastic VisArk
+# elastic-visark
 
-A modern desktop application for visualizing and managing Elasticsearch clusters, built with Vue 3 and Tauri.
+一款用于可视化和管理 Elasticsearch 集群的现代化桌面应用，基于 Vue 3 和 Tauri 构建。
 
-![Elastic VisArk](https://img.shields.io/badge/version-0.1.37-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
+![版本](https://img.shields.io/badge/version-0.1.37-blue)
+![许可证](https://img.shields.io/badge/license-MIT-green)
+![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
 
-## Features
+## 功能特性
 
-### Cluster Management
-- **Overview Dashboard** - Real-time cluster health status and statistics
-- **Index Management** - Browse, create, delete, and manage Elasticsearch indices
-- **Node Monitoring** - View cluster node information and resource usage
-- **Shard Analysis** - Analyze shard distribution and rebalancing
+### 集群管理
+- **概览仪表盘** - 实时集群健康状态和统计信息
+- **索引管理** - 浏览、创建、删除和管理 Elasticsearch 索引
+- **节点监控** - 查看集群节点信息和资源使用情况
+- **分片分析** - 分析分片分布和再平衡
 
-### Data Exploration
-- **Search Interface** - Full-featured search with query builder
-- **SQL Query** - Query Elasticsearch using SQL syntax
-- **REST API Client** - Direct API request builder and response viewer
-- **Index Templates** - Manage index templates
+### 数据探索
+- **搜索界面** - 功能完整的查询构建器
+- **SQL 查询** - 使用 SQL 语法查询 Elasticsearch
+- **REST API 客户端** - API 请求构建器和响应查看器
+- **索引模板** - 管理索引模板
 
-### Visualization
-- **Query Results Table** - Tabular view of search results
-- **JSON Viewer** - Hierarchical JSON response viewer
-- **Aggregations Builder** - Build and visualize aggregation queries
+### 可视化
+- **查询结果表格** - 搜索结果的表格视图
+- **JSON 查看器** - 层级式 JSON 响应查看器
+- **聚合构建器** - 构建和可视化聚合查询
 
-### Tools
-- **Settings Management** - Configure connection settings and preferences
-- **Query History** - Track and replay previous queries
-- **About Dialog** - Application information and updates
+### 工具
+- **设置管理** - 配置连接设置和偏好设置
+- **查询历史** - 追踪和回放历史查询
+- **关于对话框** - 应用信息和更新
 
-## Tech Stack
+## 技术栈
 
-- **Frontend Framework**: Vue 3 + TypeScript
-- **UI Components**: Naive UI
-- **State Management**: Pinia
-- **Routing**: Vue Router 4
-- **Desktop Framework**: Tauri 2.x
-- **Charts**: ECharts
-- **Code Editor**: Monaco Editor
+- **前端框架**: Vue 3 + TypeScript
+- **UI 组件库**: Naive UI
+- **状态管理**: Pinia
+- **路由**: Vue Router 4
+- **桌面框架**: Tauri 2.x
+- **图表库**: ECharts
+- **代码编辑器**: Monaco Editor
 
-## Requirements
+## 环境要求
 
 - Node.js 18+
 - pnpm 8+
 - Rust 1.70+
 - Tauri CLI 2.x
 
-## Installation
+## 安装
 
-### Prerequisites
+### 前置条件
 
-1. Install Node.js (LTS recommended)
-2. Install pnpm:
+1. 安装 Node.js（推荐 LTS 版本）
+2. 安装 pnpm：
    ```bash
    npm install -g pnpm
    ```
 
-3. Install Rust:
+3. 安装 Rust：
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
-4. Install Tauri CLI:
+4. 安装 Tauri CLI：
    ```bash
    pnpm add -g @tauri-apps/cli
    ```
 
-### Development Setup
+### 开发环境搭建
 
-1. Clone the repository:
+1. 克隆仓库：
    ```bash
    git clone https://gitee.com/visarks/elastic-visark-tauri.git
    cd elastic-visark-tauri
    ```
 
-2. Install dependencies:
+2. 安装依赖：
    ```bash
    pnpm install
    ```
 
-3. Start development server:
+3. 启动开发服务器：
    ```bash
    pnpm tauri dev
    ```
 
-### Build
+### 构建
 
-Build for production:
+构建生产版本：
 
 ```bash
 pnpm tauri build
 ```
 
-The executable will be generated in `src-tauri/target/release/bundle/`.
+可执行文件将生成在 `src-tauri/target/release/bundle/` 目录下。
 
-## Project Structure
+## 项目结构
 
 ```
 elastic-visark-tauri/
-├── src/                      # Vue frontend source
-│   ├── assets/               # Static assets
-│   ├── components/           # Reusable components
-│   │   └── layout/           # Layout components
-│   ├── views/                # Page components
-│   │   ├── cluster/          # Cluster management
-│   │   ├── home/             # Home page
-│   │   ├── index/            # Index details
-│   │   ├── search/           # Search interface
-│   │   ├── settings/         # Settings page
-│   │   ├── sql/              # SQL query
-│   │   └── template/         # Index templates
-│   ├── stores/               # Pinia stores
-│   ├── types/                # TypeScript types
-│   ├── utils/                # Utility functions
-│   └── router/               # Vue Router config
-├── src-tauri/                # Tauri backend source
-│   ├── icons/                # Application icons
-│   ├── src/                  # Rust source
-│   │   └── main.rs           # Entry point
-│   ├── Cargo.toml            # Rust dependencies
-│   └── tauri.conf.json       # Tauri configuration
-├── public/                   # Public assets
-├── index.html                # HTML entry
-├── package.json              # Node dependencies
-├── tsconfig.json             # TypeScript config
-├── vite.config.ts           # Vite config
-└── CLAUDE.md                 # Project conventions
+├── src/                      # Vue 前端源码
+│   ├── assets/               # 静态资源
+│   ├── components/           # 可复用组件
+│   │   └── layout/          # 布局组件
+│   ├── views/               # 页面组件
+│   │   ├── cluster/         # 集群管理
+│   │   ├── home/            # 首页
+│   │   ├── index/           # 索引详情
+│   │   ├── search/          # 搜索界面
+│   │   ├── settings/        # 设置页面
+│   │   ├── sql/             # SQL 查询
+│   │   └── template/        # 索引模板
+│   ├── stores/              # Pinia 状态管理
+│   ├── types/               # TypeScript 类型定义
+│   ├── utils/               # 工具函数
+│   └── router/              # Vue Router 配置
+├── src-tauri/               # Tauri 后端源码
+│   ├── icons/               # 应用图标
+│   ├── src/                 # Rust 源码
+│   │   └── main.rs          # 入口文件
+│   ├── Cargo.toml           # Rust 依赖
+│   └── tauri.conf.json      # Tauri 配置
+├── public/                  # 公共资源
+├── index.html               # HTML 入口
+├── package.json             # Node 依赖
+├── tsconfig.json            # TypeScript 配置
+├── vite.config.ts           # Vite 配置
+└── CLAUDE.md                # 项目规范
 ```
 
-## Configuration
+## 配置
 
-### Elasticsearch Connection
+### Elasticsearch 连接
 
-Configure your Elasticsearch connection in the Settings page:
-- Host URL (default: http://localhost:9200)
-- Authentication (username/password or API key)
-- Connection timeout
+在设置页面配置 Elasticsearch 连接：
+- 主机地址（默认：http://localhost:9200）
+- 认证方式（用户名/密码或 API Key）
+- 连接超时时间
 
-### Application Settings
+### 应用设置
 
-- Theme (light/dark mode)
-- Query history retention
-- Result preview limits
+- 主题（浅色/深色模式）
+- 查询历史保留时间
+- 结果预览限制
 
-## Keyboard Shortcuts
+## 快捷键
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl/Cmd + K` | Open command palette |
-| `Ctrl/Cmd + S` | Save current query |
-| `Ctrl/Cmd + Enter` | Execute query |
-| `Ctrl/Cmd + Shift + C` | Copy results |
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl/Cmd + K` | 打开命令面板 |
+| `Ctrl/Cmd + S` | 保存当前查询 |
+| `Ctrl/Cmd + Enter` | 执行查询 |
+| `Ctrl/Cmd + Shift + C` | 复制结果 |
 
-## License
+## 许可证
 
-MIT License - see LICENSE file for details.
+MIT 许可证 -详见 LICENSE 文件。
 
-## Acknowledgments
+## 致谢
 
-Built with [Tauri](https://tauri.app/), [Vue](https://vuejs.org/), and [Naive UI](https://www.naiveui.com/).
+基于 [Tauri](https://tauri.app/)、[Vue](https://vuejs.org/) 和 [Naive UI](https://www.naiveui.com/) 构建。
