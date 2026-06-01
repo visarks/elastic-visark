@@ -697,22 +697,9 @@ function previewUpdateJson() {
     return
   }
 
-  // 构建 script source
+  // 构建 script source，用户输入原样拼接，不做任何转换
   const scriptLines = validFields.map(f => {
-    // 尝试解析为 JSON，如果失败则作为字符串
-    let value: any = f.value
-    try {
-      value = JSON.parse(f.value)
-    } catch {
-      // 保持字符串
-    }
-    if (typeof value === 'string') {
-      return `ctx._source['${f.field}'] = '${f.value.replace(/'/g, "\\'")}';`
-    } else if (typeof value === 'object') {
-      return `ctx._source['${f.field}'] = ${JSON.stringify(value)};`
-    } else {
-      return `ctx._source['${f.field}'] = ${value};`
-    }
+    return `ctx._source['${f.field}'] = ${f.value};`
   })
 
   // 构建更新请求体

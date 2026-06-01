@@ -5,7 +5,7 @@ export type BoolContext = 'must' | 'must_not' | 'should' | 'filter'
 export type SearchType = 'query' | 'bool'
 
 // 查询类型
-export type QueryType = 'term' | 'terms' | 'wildcard' | 'match' | 'range' | 'exists'
+export type QueryType = 'term' | 'terms' | 'wildcard' | 'match' | 'match_phrase' | 'range' | 'exists'
 
 // 搜索项
 export interface SearchItem {
@@ -126,6 +126,9 @@ function buildQueryClause(item: SearchItem): any | null {
     case 'match':
       if (!item.value) return null
       return { match: { [item.field]: item.value } }
+    case 'match_phrase':
+      if (!item.value) return null
+      return { match_phrase: { [item.field]: item.value } }
     case 'range':
       const range: any = {}
       // 使用默认操作符

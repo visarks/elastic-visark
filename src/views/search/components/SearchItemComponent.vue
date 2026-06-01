@@ -30,6 +30,7 @@ const queryTypeOptions = [
   { label: 'term', value: 'term' },
   { label: 'terms', value: 'terms' },
   { label: 'match', value: 'match' },
+  { label: 'match_phrase', value: 'match_phrase' },
   { label: 'wildcard', value: 'wildcard' },
   { label: 'range', value: 'range' },
   { label: 'exists', value: 'exists' }
@@ -179,7 +180,7 @@ function removeNestedQuery(id: string) {
         />
 
         <!-- 值输入 -->
-        <template v-if="['term', 'terms', 'match', 'wildcard'].includes(searchItem.queryType || '')">
+        <template v-if="['term', 'terms', 'match', 'match_phrase', 'wildcard'].includes(searchItem.queryType || '')">
           <n-input
             :value="searchItem.value"
             :placeholder="searchItem.queryType === 'terms' ? '值1,值2,...' : '值'"
