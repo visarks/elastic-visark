@@ -48,10 +48,11 @@ jobs:
 
       - name: Build the app
         run: |
-          printf '%s\n' "$TAURI_SIGNING_PRIVATE_KEY" > signing_key.key
+          printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" > signing_key.key
+          unset TAURI_SIGNING_PRIVATE_KEY_FILE
+          export TAURI_SIGNING_PRIVATE_KEY="$TAURI_SIGNING_PRIVATE_KEY"
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
@@ -110,10 +111,11 @@ jobs:
 
       - name: Build the app
         run: |
-          printf '%s\n' "$TAURI_SIGNING_PRIVATE_KEY" > signing_key.key
+          printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" > signing_key.key
+          unset TAURI_SIGNING_PRIVATE_KEY_FILE
+          export TAURI_SIGNING_PRIVATE_KEY="$TAURI_SIGNING_PRIVATE_KEY"
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
