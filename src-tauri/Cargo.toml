@@ -1,6 +1,6 @@
 [package]
 name = "elastic-visark"
-version = "0.1.0"
+version = "0.1.41"
 description = "Elasticsearch Client built with Tauri"
 authors = ["you"]
 edition = "2021"
