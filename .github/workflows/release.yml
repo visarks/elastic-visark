@@ -48,11 +48,11 @@ jobs:
 
       - name: Build the app
         run: |
-          echo "TAURI_SIGNING_PRIVATE_KEY length: ${#TAURI_SIGNING_PRIVATE_KEY}"
-          echo "TAURI_SIGNING_PRIVATE_KEY sha256: $(echo -n "$TAURI_SIGNING_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)"
+          echo "$TAURI_SIGNING_PRIVATE_KEY" > secret_key.b64
+          base64 -d secret_key.b64 > signing_key.key
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY | base64_decode }}
+          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
@@ -111,11 +111,11 @@ jobs:
 
       - name: Build the app
         run: |
-          echo "TAURI_SIGNING_PRIVATE_KEY length: ${#TAURI_SIGNING_PRIVATE_KEY}"
-          echo "TAURI_SIGNING_PRIVATE_KEY sha256: $(echo -n "$TAURI_SIGNING_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)"
+          echo "$TAURI_SIGNING_PRIVATE_KEY" > secret_key.b64
+          base64 -d secret_key.b64 > signing_key.key
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY | base64_decode }}
+          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
@@ -170,9 +170,12 @@ jobs:
         run: pnpm install
 
       - name: Build the app
-        run: pnpm tauri build
+        run: |
+          echo "$TAURI_SIGNING_PRIVATE_KEY" > secret_key.b64
+          base64 -d secret_key.b64 > signing_key.key
+          pnpm tauri build
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY | base64_decode }}
+          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
