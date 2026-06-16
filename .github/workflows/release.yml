@@ -52,7 +52,7 @@ jobs:
           base64 -d -i secret_key.b64 -o signing_key.key
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
+          TAURI_SIGNING_PRIVATE_KEY: $(cat signing_key.key)
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
@@ -115,7 +115,7 @@ jobs:
           base64 -d -i secret_key.b64 -o signing_key.key
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
+          TAURI_SIGNING_PRIVATE_KEY: $(cat signing_key.key)
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
@@ -175,7 +175,7 @@ jobs:
           base64 -d -i secret_key.b64 -o signing_key.key
           pnpm tauri build
         env:
-          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
+          TAURI_SIGNING_PRIVATE_KEY: $(cat signing_key.key)
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show generated files
