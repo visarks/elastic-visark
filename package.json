@@ -1,6 +1,6 @@
 {
   "name": "elastic-visark",
-  "version": "0.1.44",
+  "version": "0.1.53",
   "private": true,
   "type": "module",
   "scripts": {

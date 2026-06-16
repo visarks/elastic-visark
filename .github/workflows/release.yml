@@ -264,12 +264,12 @@ jobs:
           # Windows x64
           WINDOWS_X64_URL=$(get_filename "artifacts/windows-x64" "*.exe")
           WINDOWS_X64_SIG=$(get_signature "artifacts/windows-x64" "*.exe")
-          cat > win32-x86_64-update.json << EOF
+          cat > windows-x86_64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
-              "win32-x86_64": {
+              "windows-x86_64": {
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${WINDOWS_X64_URL}",
                 "signature": "${WINDOWS_X64_SIG}"
               }
@@ -280,12 +280,12 @@ jobs:
           # Windows aarch64
           WINDOWS_AARCH64_URL=$(get_filename "artifacts/windows-aarch64" "*.exe")
           WINDOWS_AARCH64_SIG=$(get_signature "artifacts/windows-aarch64" "*.exe")
-          cat > win32-aarch64-update.json << EOF
+          cat > windows-aarch64-update.json << EOF
           {
             "version": "${VERSION_NUM}",
             "date": "${DATE}",
             "platforms": {
-              "win32-aarch64": {
+              "windows-aarch64": {
                 "url": "https://github.com/visarks/elastic-visark/releases/download/${VERSION}/${WINDOWS_AARCH64_URL}",
                 "signature": "${WINDOWS_AARCH64_SIG}"
               }
