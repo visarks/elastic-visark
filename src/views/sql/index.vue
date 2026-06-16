@@ -316,7 +316,7 @@ async function executeSql() {
   const startTime = Date.now()
 
   try {
-    const res = await client.execute('POST', '/_sql', { query: sql })
+    const res = await client.execute('POST', '/_sql', { query: sql, field_multi_value_leniency: true })
     updateState({ result: res })
     duration.value = Date.now() - startTime
 
