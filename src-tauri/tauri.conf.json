@@ -63,7 +63,7 @@
       "endpoints": [
         "https://github.com/visarks/elastic-visark/releases/latest/download/{{target}}-{{arch}}-update.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgzMDAxOEY2REMxQzMzMzQKUldRME14emM5aGdBZzl5blhPQXREdjRObEt0WWZWQjBaQy83TmtFWmZXQjNzMFUzbW1TSEZOZlUK"
+      "pubkey": "RWTI2uCawe/C0n8K/yqRJ1lP6YgFXKFAbm9sswR+wVIRPdIeIvJ5YrK8"
     }
   }
 }
