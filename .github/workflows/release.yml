@@ -47,12 +47,9 @@ jobs:
         run: pnpm install
 
       - name: Build the app
-        run: |
-          echo "$TAURI_SIGNING_PRIVATE_KEY" > secret.b64
-          base64 -d -i secret.b64 -o signing.key
-          pnpm tauri build --target ${{ matrix.target }}
+        run: pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY: signing.key
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Show generated files
         run: |
@@ -109,12 +106,9 @@ jobs:
         run: pnpm install
 
       - name: Build the app
-        run: |
-          echo "$TAURI_SIGNING_PRIVATE_KEY" > secret.b64
-          base64 -d -i secret.b64 -o signing.key
-          pnpm tauri build --target ${{ matrix.target }}
+        run: pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY: signing.key
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Show generated files
         shell: bash
@@ -168,12 +162,9 @@ jobs:
         run: pnpm install
 
       - name: Build the app
-        run: |
-          printf '%s\n' "$TAURI_SIGNING_PRIVATE_KEY" > signing_key.key
-          pnpm tauri build
+        run: pnpm tauri build
         env:
-          TAURI_SIGNING_PRIVATE_KEY_FILE: signing_key.key
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Show generated files
         run: |
