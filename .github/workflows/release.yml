@@ -52,7 +52,7 @@ jobs:
           base64 -d -i secret.b64 -o signing.key
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY_PATH: signing.key
+          TAURI_SIGNING_PRIVATE_KEY: signing.key
 
       - name: Show generated files
         run: |
@@ -114,7 +114,7 @@ jobs:
           base64 -d -i secret.b64 -o signing.key
           pnpm tauri build --target ${{ matrix.target }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY_PATH: signing.key
+          TAURI_SIGNING_PRIVATE_KEY: signing.key
 
       - name: Show generated files
         shell: bash
